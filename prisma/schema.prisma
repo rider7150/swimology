@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(cuid())
+  name          String?
+  email         String      @unique
+  password      String
+  role          UserRole    @default(PARENT)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  admin         Admin?
+  instructor    Instructor?
+  parent        Parent?
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Organization {
+  id                   String       @id @default(cuid())
+  name                 String
+  membershipIdRequired Boolean      @default(false)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  admins               Admin[]
+  classLevels          ClassLevel[]
+  instructors          Instructor[]
+  parents              Parent[]
+}
+
+model Admin {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String       @unique
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+}
+
+model Instructor {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String       @unique
+  phoneNumber    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  lessons        Lesson[]
+}
+
+model Parent {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String       @unique
+  membershipId   String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  children       Child[]
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+}
+
+model Child {
+  id          String       @id @default(cuid())
+  name        String
+  birthDate   DateTime
+  parentId    String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  parent      Parent       @relation(fields: [parentId], references: [id])
+  enrollments Enrollment[]
+}
+
+model ClassLevel {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  capacity       Int          @default(8)
+  color          String       @default("#3B82F6")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organizationId String
+  sortOrder      Int          @default(0)
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  lessons        Lesson[]
+  skills         Skill[]
+}
+
+model Skill {
+  id           String          @id @default(cuid())
+  name         String
+  description  String?
+  classLevelId String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  classLevel   ClassLevel      @relation(fields: [classLevelId], references: [id])
+  progress     SkillProgress[]
+  lessons      Lesson[]
+}
+
+model Lesson {
+  id            String      @id @default(cuid())
+  classLevelId  String
+  instructorId  String
+  startDate     DateTime
+  endDate       DateTime
+  dayOfWeek     Int
+  startTime     DateTime
+  endTime       DateTime
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  classLevel    ClassLevel  @relation(fields: [classLevelId], references: [id], onDelete: Cascade)
+  instructor    Instructor  @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  enrollments   Enrollment[]
+  skills        Skill[]
+
+  @@index([classLevelId])
+  @@index([instructorId])
+}
+
+model Enrollment {
+  id                String          @id @default(cuid())
+  childId           String
+  lessonId          String
+  startDate         DateTime
+  endDate           DateTime
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  readyForNextLevel Boolean         @default(false)
+  improvementNotes  String?
+  strengthNotes     String?
+  child             Child           @relation(fields: [childId], references: [id])
+  lesson            Lesson          @relation(fields: [lessonId], references: [id])
+  progress          SkillProgress[]
+}
+
+model SkillProgress {
+  id           String      @id @default(cuid())
+  skillId      String
+  enrollmentId String
+  status       SkillStatus @default(NOT_STARTED)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  enrollment   Enrollment  @relation(fields: [enrollmentId], references: [id])
+  skill        Skill       @relation(fields: [skillId], references: [id])
+
+  @@unique([skillId, enrollmentId])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  INSTRUCTOR
+  PARENT
+}
+
+enum SkillStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}

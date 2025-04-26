@@ -1,103 +1,325 @@
-import Image from "next/image";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import ParentDashboard from "@/components/parents/parent-dashboard";
+import { InstructorDashboard } from "@/components/instructors/instructor-dashboard";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+interface Skill {
+  id: string;
+  name: string;
+  description?: string;
+  strengthNotes?: string;
+  improvementNotes?: string;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+interface ClassLevel {
+  id: string;
+  name: string;
+  sortOrder: number;
+  color?: string;
+  skills: Array<{ id: string; name: string; description?: string }>;
+}
+
+interface DbChild {
+  id: string;
+  name: string;
+  enrollments: Array<{
+    lesson: {
+      id: string;
+      classLevel: {
+        id: string;
+        name: string;
+        sortOrder: number;
+        color?: string;
+        skills: Array<{ id: string; name: string; description?: string }>;
+      };
+      dayOfWeek: number;
+      startTime: Date;
+      endTime: Date;
+      startDate: Date;
+      endDate: Date;
+    };
+    progress: Array<{
+      skillId: string;
+      status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+    }>;
+    readyForNextLevel: boolean;
+    strengthNotes?: string | null;
+    improvementNotes?: string | null;
+  }>;
+}
+
+interface LessonWithDetails {
+  id: string;
+  startTime: Date;
+  endTime: Date;
+  startDate: Date;
+  endDate: Date;
+  dayOfWeek: number;
+  classLevel: ClassLevel;
+  enrollments: Array<{
+    id: string;
+    child: {
+      id: string;
+      name: string;
+    };
+    progress: Array<{
+      skillId: string;
+      status: string;
+    }>;
+    strengthNotes?: string | null;
+    improvementNotes?: string | null;
+    readyForNextLevel: boolean;
+  }>;
+}
+
+async function getChildrenForParent(userId: string) {
+  try {
+    const parent = await prisma.parent.findFirst({
+      where: { userId },
+      include: {
+        children: {
+          include: {
+            enrollments: {
+              include: {
+                lesson: {
+                  include: {
+                    classLevel: {
+                      include: {
+                        skills: {
+                          select: {
+                            id: true,
+                            name: true,
+                            description: true,
+                          }
+                        },
+                      },
+                    },
+                  },
+                },
+                progress: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!parent) {
+      return [];
+    }
+
+    return parent.children.map(child => {
+      return {
+        id: child.id,
+        name: child.name,
+        lessons: child.enrollments.map(enrollment => {
+          // Map skills to expected type right after fetching
+          enrollment.lesson.classLevel.skills = enrollment.lesson.classLevel.skills.map(skill => ({
+            id: skill.id,
+            name: skill.name,
+            description: skill.description ?? null,
+          }));
+          const skills = (enrollment.lesson.classLevel.skills as Array<{ id: string; name: string; description?: string }> ).map((skill) => ({
+            ...skill,
+            status: enrollment.progress.find((p: any) => p.skillId === skill.id)?.status || "NOT_STARTED"
+          }));
+
+          const completedSkills = skills.length > 0 ? Math.round((skills.length / skills.length) * 100) : 0;
+          const progress = skills.length > 0 ? Math.round((completedSkills / skills.length) * 100) : 0;
+
+          return {
+            id: enrollment.lesson.id,
+            name: enrollment.lesson.classLevel.name,
+            progress,
+            skills,
+            classLevel: {
+              id: enrollment.lesson.classLevel.id,
+              name: enrollment.lesson.classLevel.name,
+              sortOrder: enrollment.lesson.classLevel.sortOrder,
+              color: (enrollment.lesson.classLevel as any).color,
+            },
+            dayOfWeek: enrollment.lesson.dayOfWeek,
+            startTime: enrollment.lesson.startTime.toISOString(),
+            endTime: enrollment.lesson.endTime.toISOString(),
+            startDate: enrollment.lesson.startDate.toISOString(),
+            endDate: enrollment.lesson.endDate.toISOString(),
+            readyForNextLevel: enrollment.readyForNextLevel,
+            strengthNotes: enrollment.strengthNotes ?? undefined,
+            improvementNotes: enrollment.improvementNotes ?? undefined
+          };
+        })
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching children:', error);
+    return [];
+  }
+}
+
+async function getLessonsForInstructor(userId: string) {
+  try {
+    const instructor = await prisma.instructor.findUnique({
+      where: { userId },
+    });
+
+    if (!instructor) {
+      console.log("No instructor found for user:", userId);
+      return [];
+    }
+
+    const lessons = await prisma.lesson.findMany({
+      where: {
+        instructorId: instructor.id,
+        endDate: {
+          gte: new Date(),
+        },
+      },
+      include: {
+        classLevel: {
+          include: {
+            skills: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              }
+            },
+          },
+        },
+        enrollments: {
+          include: {
+            child: true,
+            progress: {
+              include: {
+                skill: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        startDate: 'asc',
+      },
+    });
+
+    return lessons.map(lesson => {
+      // Map skills to expected type right after fetching
+      lesson.classLevel.skills = lesson.classLevel.skills.map(skill => ({
+        id: skill.id,
+        name: skill.name,
+        description: skill.description ?? null,
+      }));
+      const mappedSkills = lesson.classLevel.skills as Array<{ id: string; name: string; description?: string }>;
+      return {
+        id: lesson.id,
+        name: `${lesson.classLevel.name} - ${formatTime(lesson.startTime)} ${getDayName(lesson.dayOfWeek)}`,
+        classLevel: {
+          id: lesson.classLevel.id,
+          name: lesson.classLevel.name,
+          color: (lesson.classLevel as any).color,
+          sortOrder: lesson.classLevel.sortOrder
+        },
+        month: lesson.startDate.getMonth() + 1,
+        year: lesson.startDate.getFullYear(),
+        dayOfWeek: lesson.dayOfWeek,
+        startTime: lesson.startTime.toISOString(),
+        endTime: lesson.endTime.toISOString(),
+        startDate: lesson.startDate.toISOString(),
+        endDate: lesson.endDate.toISOString(),
+        students: lesson.enrollments.map(enrollment => ({
+          id: enrollment.child.id,
+          name: enrollment.child.name,
+          enrollmentId: enrollment.id,
+          classLevel: {
+            id: lesson.classLevel.id,
+            name: lesson.classLevel.name,
+            color: (lesson.classLevel as any).color,
+            sortOrder: lesson.classLevel.sortOrder
+          },
+          strengthNotes: enrollment.strengthNotes ?? undefined,
+          improvementNotes: enrollment.improvementNotes ?? undefined,
+          readyForNextLevel: enrollment.readyForNextLevel,
+          skills: mappedSkills.map((skill) => ({
+            ...skill,
+            status: (enrollment.progress.find((p: any) => p.skillId === skill.id)?.status as 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED') || 'NOT_STARTED'
+          }))
+        })),
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching instructor lessons:", error);
+    return [];
+  }
+}
+
+function formatTime(time: Date) {
+  return time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function getDayName(dayOfWeek: number) {
+  return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
+}
+
+export default async function HomePage() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    redirect("/api/auth/signin");
+  }
+
+  // Redirect super admins to organizations page
+  if (session.user.role === "SUPER_ADMIN") {
+    redirect("/organizations");
+  }
+
+  // For other roles, show their respective dashboards
+  const userRole = session.user.role;
+  let dashboardContent;
+
+  if (userRole === "PARENT") {
+    const children = await getChildrenForParent(session.user.id);
+    dashboardContent = <ParentDashboard children={children} />;
+  } else if (userRole === "INSTRUCTOR") {
+    const lessons = await getLessonsForInstructor(session.user.id);
+    dashboardContent = <InstructorDashboard lessons={lessons} />;
+  } else if (userRole === "ADMIN") {
+    const organization = await prisma.organization.findUnique({
+      where: { id: session.user.organizationId },
+      include: {
+        instructors: {
+          include: {
+            user: true,
+          },
+        },
+        classLevels: true,
+        admins: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!organization) {
+      dashboardContent = (
+        <div className="space-y-6">
+          <h1 className="text-2xl font-bold">Organization Admin Dashboard</h1>
+          <p className="text-red-600">Organization not found. Please contact support.</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      );
+    } else {
+      const { OrganizationDetails } = await import('@/components/organizations/organization-details');
+      dashboardContent = <OrganizationDetails organization={organization} />;
+    }
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {dashboardContent}
     </div>
   );
 }
