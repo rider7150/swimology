@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
-import { OrganizationTabs } from "./organization-tabs";
 import { OrganizationOverview } from "./organization-overview";
 
 interface ClassLevel {
@@ -44,6 +43,8 @@ interface OrganizationWithRelations extends Organization {
       email: string;
     };
   }[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface OrganizationDetailsProps {
@@ -88,9 +89,9 @@ export function OrganizationDetails({ organization }: OrganizationDetailsProps) 
         </div>
       )}
 
-      <OrganizationTabs organizationId={organization.id} />
-      
       <OrganizationOverview organization={organization} />
+
+
     </div>
   ); 
 } 

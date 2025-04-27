@@ -112,25 +112,27 @@ async function getChildrenForParent(userId: string) {
       return [];
     }
 
-    return parent.children.map(child => {
+    return parent.children.map((child: any) => {
       return {
         id: child.id,
         name: child.name,
-        lessons: child.enrollments.map(enrollment => {
+        lessons: child.enrollments.map((enrollment: any) => {
           // Map skills to expected type right after fetching
-          enrollment.lesson.classLevel.skills = enrollment.lesson.classLevel.skills.map(skill => ({
+          enrollment.lesson.classLevel.skills = enrollment.lesson.classLevel.skills.map((skill: any) => ({
             id: skill.id,
             name: skill.name,
             description: skill.description ?? null,
           }));
-          const skills = (enrollment.lesson.classLevel.skills as Array<{ id: string; name: string; description?: string }> ).map((skill) => ({
-            ...skill,
-            status: enrollment.progress.find((p: any) => p.skillId === skill.id)?.status || "NOT_STARTED"
-          }));
-
-          const completedSkills = skills.length > 0 ? Math.round((skills.length / skills.length) * 100) : 0;
+          // Build skills array by joining with progress
+          const skills = (enrollment.lesson.classLevel.skills as Array<{ id: string; name: string; description?: string }> ).map((skill) => {
+            const progress = enrollment.progress.find((p: any) => p.skillId === skill.id);
+            return {
+              ...skill,
+              status: progress?.status || "NOT_STARTED"
+            };
+          });
+          const completedSkills = skills.filter((s: any) => s.status === "COMPLETED").length;
           const progress = skills.length > 0 ? Math.round((completedSkills / skills.length) * 100) : 0;
-
           return {
             id: enrollment.lesson.id,
             name: enrollment.lesson.classLevel.name,
@@ -206,9 +208,9 @@ async function getLessonsForInstructor(userId: string) {
       },
     });
 
-    return lessons.map(lesson => {
+    return lessons.map((lesson: any) => {
       // Map skills to expected type right after fetching
-      lesson.classLevel.skills = lesson.classLevel.skills.map(skill => ({
+      lesson.classLevel.skills = lesson.classLevel.skills.map((skill: any) => ({
         id: skill.id,
         name: skill.name,
         description: skill.description ?? null,
@@ -230,7 +232,7 @@ async function getLessonsForInstructor(userId: string) {
         endTime: lesson.endTime.toISOString(),
         startDate: lesson.startDate.toISOString(),
         endDate: lesson.endDate.toISOString(),
-        students: lesson.enrollments.map(enrollment => ({
+        students: lesson.enrollments.map((enrollment: any) => ({
           id: enrollment.child.id,
           name: enrollment.child.name,
           enrollmentId: enrollment.id,
@@ -243,7 +245,7 @@ async function getLessonsForInstructor(userId: string) {
           strengthNotes: enrollment.strengthNotes ?? undefined,
           improvementNotes: enrollment.improvementNotes ?? undefined,
           readyForNextLevel: enrollment.readyForNextLevel,
-          skills: mappedSkills.map((skill) => ({
+          skills: mappedSkills.map((skill: any) => ({
             ...skill,
             status: (enrollment.progress.find((p: any) => p.skillId === skill.id)?.status as 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED') || 'NOT_STARTED'
           }))

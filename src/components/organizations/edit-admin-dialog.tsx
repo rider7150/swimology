@@ -4,7 +4,6 @@ import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
 import { toast } from "sonner";
 
 interface Admin {
@@ -73,11 +72,6 @@ export function EditAdminDialog({ organizationId, admin, onAdminUpdated, trigger
             <Dialog.Title className="text-lg font-semibold">
               Edit Admin
             </Dialog.Title>
-            <Dialog.Close asChild>
-              <button className="text-gray-400 hover:text-gray-500">
-                <X className="h-4 w-4" />
-              </button>
-            </Dialog.Close>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

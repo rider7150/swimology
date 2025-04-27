@@ -5,8 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { InstructorList } from "@/components/instructors/instructor-list";
 import { AddLessonDialog } from "@/components/lessons/add-lesson-dialog";
 import { AddInstructorDialog } from "@/components/instructors/add-instructor-dialog";
-import { OrganizationTabs } from "@/components/organizations/organization-tabs";
-import { UserRole } from "@prisma/client";
 
 interface PageProps {
   params: {
@@ -39,8 +37,8 @@ export default async function InstructorsPage({ params }: PageProps) {
 
   // Allow access if user is super admin or an admin of this organization
   const isAuthorized =
-    user.role === UserRole.SUPER_ADMIN ||
-    (user.role === UserRole.ADMIN && user.admin?.organizationId === organizationId);
+    user.role === 'SUPER_ADMIN' ||
+    (user.role === 'ADMIN' && user.admin?.organizationId === organizationId);
 
   if (!isAuthorized) {
     redirect("/");
@@ -98,7 +96,7 @@ export default async function InstructorsPage({ params }: PageProps) {
   }
 
   // Transform instructors data for the AddLessonDialog component
-  const simplifiedInstructors = instructors.map(instructor => ({
+  const simplifiedInstructors = instructors.map((instructor: any) => ({
     id: instructor.id,
     user: {
       name: instructor.user.name || 'Unnamed Instructor'
@@ -106,7 +104,7 @@ export default async function InstructorsPage({ params }: PageProps) {
   }));
 
   // Transform instructors data for the InstructorList component
-  const transformedInstructors = instructors.map(instructor => ({
+  const transformedInstructors = instructors.map((instructor: any) => ({
     id: instructor.id,
     organizationId: instructor.organizationId,
     userId: instructor.userId,
@@ -117,7 +115,7 @@ export default async function InstructorsPage({ params }: PageProps) {
       email: instructor.user.email,
       role: instructor.user.role as string
     },
-    lessons: instructor.lessons.map(lesson => ({
+    lessons: instructor.lessons.map((lesson: any) => ({
       id: lesson.id,
       instructorId: instructor.id,
       classLevelId: lesson.classLevelId,
@@ -132,8 +130,6 @@ export default async function InstructorsPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <OrganizationTabs organizationId={organizationId} />
-      
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>

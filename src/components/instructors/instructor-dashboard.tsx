@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
-import { CheckCircle, Clock, MoreHorizontal } from "lucide-react";
+import { CheckCircle, Clock, MoreHorizontal, GraduationCap } from "lucide-react";
+import { differenceInYears } from "date-fns";
 
 interface Skill {
   id: string;
   name: string;
   description?: string;
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  notes?: string;
 }
 
 interface ClassLevel {
@@ -29,6 +31,7 @@ interface Student {
   strengthNotes?: string;
   improvementNotes?: string;
   readyForNextLevel: boolean;
+  birthDate?: string;
 }
 
 interface Lesson {
@@ -56,7 +59,7 @@ interface InstructorDashboardProps {
 }
 
 export function InstructorDashboard({ lessons: initialLessons }: InstructorDashboardProps) {
-  console.log('Initial Lessons:', JSON.stringify(initialLessons, null, 2));
+//  console.log('Initial Lessons:', JSON.stringify(initialLessons, null, 2));
 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [updatingSkill, setUpdatingSkill] = useState(false);
@@ -73,17 +76,26 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
   const [draftState, setDraftState] = useState<{
     skills: { [key: string]: Skill["status"] };
     notes: { strength: string; improvement: string };
+    skillNotes: { [key: string]: string };
     readyForNextLevel: boolean;
   }>({
     skills: {},
     notes: { strength: "", improvement: "" },
+    skillNotes: {},
     readyForNextLevel: false
   });
+
+  
   const [_, setForceUpdate] = useState(0);
 
   useEffect(() => {
     setForceUpdate(f => f + 1);
   }, [lessons]);
+
+  useEffect(() => {
+    // Call refreshLessons on initial load
+    refreshLessons();
+}, []); // Empty dependency array means this runs once on mount
 
   // Helper function to format time
   const formatTime = (time: string) => {
@@ -92,6 +104,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
     try {
       // If time is already in HH:mm format
       if (time.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)) {
+
         const [hours, minutes] = time.split(':').map(Number);
         const date = new Date();
         date.setHours(hours, minutes, 0, 0);
@@ -159,6 +172,8 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
     }
   };
 
+
+
   // Fetch next level name when a student is selected
   useEffect(() => {
     const fetchNextLevel = async () => {
@@ -196,12 +211,16 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
       const skillStatuses = Object.fromEntries(
         selectedStudent.skills.map(skill => [skill.id, skill.status])
       );
+      const skillNotes = Object.fromEntries(
+        selectedStudent.skills.map(skill => [skill.id, skill.notes || ""])
+      );
       setDraftState({
         skills: skillStatuses,
         notes: {
           strength: selectedEnrollment.strengthNotes || "",
           improvement: selectedEnrollment.improvementNotes || ""
         },
+        skillNotes,
         readyForNextLevel: selectedEnrollment.readyForNextLevel
       });
     }
@@ -226,8 +245,8 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
     setUpdatingSkill(true);
 
     try {
-      // Update skill statuses
-      const skillUpdates = Object.entries(draftState.skills).map(([skillId, status]) =>
+      // Update skill statuses and notes
+      const skillUpdatePromises = Object.entries(draftState.skills).map(([skillId, status]) =>
         fetch("/api/skills/progress", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -235,6 +254,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
             skillId,
             enrollmentId: selectedStudent.enrollmentId,
             status,
+            notes: draftState.skillNotes[skillId] || ""
           }),
         })
       );
@@ -256,15 +276,41 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
         body: JSON.stringify({ ready: draftState.readyForNextLevel }),
       });
 
-      await Promise.all([...skillUpdates, notesUpdate, readyUpdate]);
+      // Await all skill updates and check for errors
+      const skillResponses = await Promise.all(skillUpdatePromises);
+      const failedSkills = skillResponses.filter(res => !res.ok);
+      let errorMsg = "";
+      if (failedSkills.length > 0) {
+        // Try to get error message from first failed response
+        try {
+          const err = await failedSkills[0].json();
+          errorMsg = err.error || "Failed to save some skill progress.";
+        } catch {
+          errorMsg = "Failed to save some skill progress.";
+        }
+      }
 
-      // Refresh data
-      await refreshLessons();
-      
-      toast({
-        title: "Success",
-        description: "All changes saved successfully",
-      });
+      // Await notes and ready status updates
+      const [notesRes, readyRes] = await Promise.all([notesUpdate, readyUpdate]);
+      if (!notesRes.ok || !readyRes.ok) {
+        errorMsg = "Failed to save enrollment notes or ready status.";
+      }
+
+      if (errorMsg) {
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
+      } else {
+        // Refresh data
+        await refreshLessons();
+        setSelectedStudent(null);
+        toast({
+          title: "Success",
+          description: "All changes saved successfully",
+        });
+      }
     } catch (error) {
       console.error("Error saving changes:", error);
       toast({
@@ -288,6 +334,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
           strength: selectedEnrollment.strengthNotes || "",
           improvement: selectedEnrollment.improvementNotes || ""
         },
+        skillNotes: {},
         readyForNextLevel: selectedEnrollment.readyForNextLevel
       });
     }
@@ -330,7 +377,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                 }}
                 className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
               >
-                Back to Students
+                &lt;
               </button>
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -400,6 +447,20 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                         {getStatusIcon(status as Skill["status"])}
                       </button>
                     ))}
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Instructor Notes</label>
+                    <textarea
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      rows={2}
+                      placeholder="Add notes for this skill..."
+                      value={draftState.skillNotes[skill.id] || ""}
+                      onChange={e => setDraftState(prev => ({
+                        ...prev,
+                        skillNotes: { ...prev.skillNotes, [skill.id]: e.target.value }
+                      }))}
+                      disabled={updatingSkill}
+                    />
                   </div>
                 </div>
               </div>
@@ -473,6 +534,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
           {Object.entries(groupedLessons)
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([monthKey, dayGroups]) => {
+
               const [year, month] = monthKey.split('-').map(Number);
               return (
                 <div key={monthKey} className="space-y-4">
@@ -499,48 +561,63 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                                     </h5>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                       {lessonGroup.flatMap(lesson =>
-                                        lesson.students.map(student => (
-                                          <button
-                                            key={`${lesson.id}-${student.id}`}
-                                            onClick={() => {
-                                              setSelectedStudent(student);
-                                              setSelectedEnrollment({
-                                                id: student.enrollmentId,
-                                                readyForNextLevel: student.readyForNextLevel,
-                                                classLevel: student.classLevel,
-                                                strengthNotes: student.strengthNotes,
-                                                improvementNotes: student.improvementNotes
-                                              });
-                                            }}
-                                            className="block text-left w-full"
-                                          >
-                                            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                                              <div className="flex items-center justify-between mb-4">
-                                                <h2 className="text-xl font-semibold">{student.name}</h2>
-                                                <span 
-                                                  className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
-                                                  style={{ backgroundColor: student.classLevel.color || "#3B82F6" }}
-                                                >
-                                                  {student.classLevel.name}
-                                                </span>
-                                              </div>
-                                              <div className="space-y-1">
-                                                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                  <div
-                                                    className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                                                    style={{ width: `${(student.skills.filter(s => s.status === "COMPLETED").length / student.skills.length) * 100}%` }}
-                                                  />
+                                        lesson.students.map(student => {
+                                          let age = null;
+                                          if (student.birthDate) {
+                                            age = differenceInYears(new Date(), new Date(student.birthDate));
+                                          }
+                                          return (
+                                            <button
+                                              key={`${lesson.id}-${student.id}`}
+                                              onClick={() => {
+                                                setSelectedStudent(student);
+                                                setSelectedEnrollment({
+                                                  id: student.enrollmentId,
+                                                  readyForNextLevel: student.readyForNextLevel,
+                                                  classLevel: student.classLevel,
+                                                  strengthNotes: student.strengthNotes,
+                                                  improvementNotes: student.improvementNotes
+                                                });
+                                              }}
+                                              className="block text-left w-full"
+                                            >
+                                              <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow relative">
+                                                <div className="flex items-center justify-between mb-2">
+                                                  <div className="flex items-center">
+                                                    <h2 className="text-xl font-semibold">
+                                                      {student.name}
+                                                      {age !== null && (
+                                                        <span className="ml-2 text-gray-500 text-base">({age})</span>
+                                                      )}
+                                                    </h2>
+                                                  </div>
                                                 </div>
-                                                <div className="text-xs text-gray-500 text-right">
-                                                  {student.skills.filter(s => s.status === "COMPLETED").length} of {student.skills.length} skills completed
+                                                <div className="flex items-center mt-1 mb-2 justify-between">
+                                                  <span
+                                                    className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
+                                                    style={{ backgroundColor: student.classLevel.color || "#3B82F6" }}
+                                                  >
+                                                    {student.classLevel.name}
+                                                  </span>
+                                                  {student.readyForNextLevel && (
+                                                    <GraduationCap className="h-6 w-6 text-green-600 ml-2" />
+                                                  )}
+                                                </div>
+                                                <div className="space-y-1">
+                                                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div
+                                                      className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                                                      style={{ width: `${(student.skills.filter(s => s.status === "COMPLETED").length / student.skills.length) * 100}%` }}
+                                                    />
+                                                  </div>
+                                                  <div className="text-xs text-gray-500 text-right">
+                                                    {student.skills.filter(s => s.status === "COMPLETED").length} of {student.skills.length} skills completed
+                                                  </div>
                                                 </div>
                                               </div>
-                                              <div className="text-xs text-gray-500 mt-2">
-                                                {formatTime(startTime)} - {formatTime(endTime)}
-                                              </div>
-                                            </div>
-                                          </button>
-                                        ))
+                                            </button>
+                                          );
+                                        })
                                       )}
                                     </div>
                                   </div>

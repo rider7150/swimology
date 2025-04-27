@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { UserRole } from "@prisma/client";
 import { hashPassword } from "@/lib/utils";
 
 const instructorSchema = z.object({
@@ -28,7 +27,7 @@ export async function POST(
       select: { role: true },
     });
 
-    if (!user || (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN)) {
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {
       return NextResponse.json(
         { error: "Only administrators can manage instructors" },
         { status: 403 }
@@ -51,7 +50,7 @@ export async function POST(
     }
 
     // Create user and instructor in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Generate a random password if none provided
       const password = validatedData.password || Math.random().toString(36).slice(-8);
       
@@ -63,7 +62,7 @@ export async function POST(
           name: validatedData.name,
           email: validatedData.email,
           password: hashedPassword,
-          role: UserRole.INSTRUCTOR,
+          role: 'INSTRUCTOR',
         },
       });
 

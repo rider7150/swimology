@@ -95,9 +95,9 @@ export function ClassLevelDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {editingLevel ? (
-          <button className="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
+          <Button variant="ghost" size="icon" className="text-indigo-300 hover:text-indigo-900 inline-flex items-center">
             <PencilIcon className="h-5 w-5" />
-          </button>
+          </Button>
         ) : (
           <Button className="bg-blue-600 hover:bg-blue-700 text-white">
             <Plus className="h-5 w-5 mr-2" />

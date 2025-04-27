@@ -99,12 +99,7 @@ function SortableRow({ level, organizationId }: SortableRowProps) {
               color: level.color ?? '#000000'
             }}
           />
-          <Link
-            href={`/organizations/${organizationId}/class-levels/${level.id}/skills`}
-            className="text-indigo-600 hover:text-indigo-900 inline-flex items-center"
-          >
-            <ListChecks className="h-5 w-5" />
-          </Link>
+
           <DeleteClassLevel
             organizationId={organizationId}
             levelId={level.id}

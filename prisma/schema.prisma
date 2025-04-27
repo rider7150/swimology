@@ -17,6 +17,7 @@ model User {
   updatedAt     DateTime    @updatedAt
   emailVerified DateTime?
   image         String?
+  phoneNumber   String?
   accounts      Account[]
   admin         Admin?
   instructor    Instructor?
@@ -179,6 +180,7 @@ model SkillProgress {
   updatedAt    DateTime    @updatedAt
   enrollment   Enrollment  @relation(fields: [enrollmentId], references: [id])
   skill        Skill       @relation(fields: [skillId], references: [id])
+  notes        String?     // Instructor notes for this skill progress
 
   @@unique([skillId, enrollmentId])
 }

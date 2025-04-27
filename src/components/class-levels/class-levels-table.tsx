@@ -110,9 +110,9 @@ function SortableRow({ level, organizationId, onSuccess }: SortableRowProps) {
           />
           <Link
             href={`/organizations/${organizationId}/class-levels/${level.id}/skills`}
-            className="text-indigo-600 hover:text-indigo-900"
+            
           >
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="icon" className="text-indigo-300 hover:text-indigo-600">
               <ClipboardDocumentListIcon className="h-5 w-5" />
               <span className="sr-only">Manage Skills</span>
             </Button>
@@ -266,16 +266,16 @@ export function ClassLevelsTable({ organizationId }: ClassLevelsTableProps) {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={classLevels.map((level) => level.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <SortableContext
-                    items={classLevels.map((level) => level.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
+                  <tbody className="divide-y divide-gray-200">
                     {classLevels.map((level) => (
                       <SortableRow
                         key={level.id}
@@ -284,9 +284,9 @@ export function ClassLevelsTable({ organizationId }: ClassLevelsTableProps) {
                         onSuccess={handleSuccess}
                       />
                     ))}
-                  </SortableContext>
-                </DndContext>
-              </tbody>
+                  </tbody>
+                </SortableContext>
+              </DndContext>
             </table>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { UserRole } from "@prisma/client";
+import { OrganizationTabs } from "@/components/organizations/organization-tabs";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -27,7 +27,7 @@ export default async function OrganizationLayout({ children, params }: LayoutPro
   });
 
   // For super admins, allow access to all organizations
-  if (session.user.role === UserRole.SUPER_ADMIN) {
+  if (session.user.role === 'SUPER_ADMIN') {
     const organization = await prisma.organization.findUnique({
       where: { id: params.organizationId },
     });
@@ -47,6 +47,7 @@ export default async function OrganizationLayout({ children, params }: LayoutPro
               Organization Management
             </p>
           </div>
+          <OrganizationTabs organizationId={params.organizationId} />
           {children}
         </div>
       </div>
@@ -54,7 +55,7 @@ export default async function OrganizationLayout({ children, params }: LayoutPro
   }
 
   // For regular admins, verify they are associated with this organization
-  if (session.user.role === UserRole.ADMIN) {
+  if (session.user.role === 'ADMIN') {
     const admin = await prisma.admin.findFirst({
       where: {
         userId: session.user.id,
@@ -80,6 +81,7 @@ export default async function OrganizationLayout({ children, params }: LayoutPro
               Organization Management
             </p>
           </div>
+          <OrganizationTabs organizationId={params.organizationId} />
           {children}
         </div>
       </div>

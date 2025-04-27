@@ -39,25 +39,25 @@ export function DeleteOrganization({ organizationId, organizationName }: DeleteO
   };
 
   return (
-    <div className="fixed bottom-4 right-4">
+    <div className="w-full flex justify-start mt-8">
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Trigger asChild>
           <Button 
             variant="destructive" 
             size="sm"
-            className="flex items-center gap-2"
+            className="bg-red-600 hover:bg-red-700 text-white"
           >
             <TrashIcon className="h-4 w-4" />
-            Delete
+            Delete Organization
           </Button>
         </Dialog.Trigger>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-full max-w-md shadow-lg" aria-describedby="delete-org-description">
             <Dialog.Title className="text-lg font-semibold text-red-600">
               Delete Organization
             </Dialog.Title>
-            <Dialog.Description className="mt-2 text-sm text-gray-500">
+            <Dialog.Description id="delete-org-description" className="mt-2 text-sm text-gray-500">
               Are you sure you want to delete {organizationName}? This action cannot be undone.
               All associated data including admins, instructors, class levels, and lessons will be permanently deleted.
             </Dialog.Description>
@@ -69,10 +69,11 @@ export function DeleteOrganization({ organizationId, organizationName }: DeleteO
               </Dialog.Close>
               <Button
                 variant="destructive"
+                className="bg-red-600 hover:bg-red-700 text-white"
                 onClick={handleDelete}
                 disabled={loading}
               >
-                {loading ? 'Deleting...' : 'Delete Organization'}
+              {loading ? 'Deleting...' : 'Delete Organization'}
               </Button>
             </div>
           </Dialog.Content>

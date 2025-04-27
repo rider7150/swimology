@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "@/lib/utils";
 
 const prisma = new PrismaClient();
@@ -11,7 +11,7 @@ async function main() {
       email: "super@admin.com",
       password: hashedPassword,
       name: "Super Admin",
-      role: UserRole.SUPER_ADMIN,
+      role: 'SUPER_ADMIN',
     },
   });
 

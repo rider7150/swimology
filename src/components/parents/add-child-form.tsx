@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { X } from "lucide-react";
+import { format } from "date-fns";
 
 interface Lesson {
   id: string;
@@ -58,10 +58,10 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
           throw new Error("Failed to fetch lessons");
         }
         const data = await response.json();
-        console.log("Fetched lessons:", data);
+        //console.log("Fetched lessons:", data);
         setLessons(data);
       } catch (error) {
-        console.error("Error fetching lessons:", error);
+        //console.error("Error fetching lessons:", error);
       }
     }
 
@@ -124,7 +124,6 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
         className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 focus:outline-none"
         aria-label="Close"
       >
-        <X className="h-5 w-5" />
       </button>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-6">
         <div>
@@ -184,12 +183,13 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
             >
               <option value="">Select a lesson</option>
               {lessons.map((lesson) => {
+                const startMonth = format(new Date(lesson.startDate), 'MMMM');
                 const dayOfWeek = getDayName(lesson.dayOfWeek) + 's';
                 const startTime = formatTime(lesson.startTime);
                 const endTime = formatTime(lesson.endTime);
                 return (
                   <option key={lesson.id} value={lesson.id}>
-                    {lesson.classLevel.name}, {dayOfWeek}, {startTime} - {endTime}, with {lesson.instructor.user.name}
+                    {lesson.classLevel.name}, {startMonth}, {dayOfWeek}, {startTime} - {endTime}, with {lesson.instructor.user.name}
                   </option>
                 );
               })}

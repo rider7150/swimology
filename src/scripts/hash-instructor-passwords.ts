@@ -1,13 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/utils";
-import { UserRole } from "@prisma/client";
 
 async function hashInstructorPasswords() {
   try {
     // Get all instructor users
     const instructorUsers = await prisma.user.findMany({
       where: {
-        role: UserRole.INSTRUCTOR,
+        role: 'INSTRUCTOR',
       },
     });
 

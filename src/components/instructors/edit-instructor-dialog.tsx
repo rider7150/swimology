@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Pencil } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { InstructorForm } from "./instructor-form";
 
 interface EditInstructorDialogProps {
@@ -26,8 +25,8 @@ export function EditInstructorDialog({ organizationId, instructor }: EditInstruc
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-600 hover:text-gray-800 hover:bg-gray-100">
-          <Pencil className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="text-indigo-300 hover:text-indigo-900">
+          <Pencil className="h-5 w-5" />
         </Button>
       </Dialog.Trigger>
       <Dialog.Portal>
@@ -37,11 +36,7 @@ export function EditInstructorDialog({ organizationId, instructor }: EditInstruc
             <Dialog.Title className="text-lg font-semibold">
               Edit Instructor
             </Dialog.Title>
-            <Dialog.Close asChild>
-              <button className="text-gray-400 hover:text-gray-500">
-                <X className="h-4 w-4" />
-              </button>
-            </Dialog.Close>
+
           </div>
           <div className="p-6">
             <InstructorForm

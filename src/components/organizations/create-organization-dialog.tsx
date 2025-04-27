@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -13,7 +13,7 @@ import * as z from "zod";
 
 const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
-  membershipIdRequired: z.boolean().default(false),
+  membershipIdRequired: z.boolean(),
   adminName: z.string().min(1, "Admin name is required"),
   adminEmail: z.string().email("Invalid email address"),
   adminPassword: z.string().min(6, "Password must be at least 6 characters"),
@@ -30,7 +30,11 @@ export function CreateOrganizationDialog() {
   const form = useForm<OrganizationFormData>({
     resolver: zodResolver(organizationSchema),
     defaultValues: {
+      name: "",
       membershipIdRequired: false,
+      adminName: "",
+      adminEmail: "",
+      adminPassword: "",
     },
   });
 
@@ -90,11 +94,7 @@ export function CreateOrganizationDialog() {
             <Dialog.Title className="text-lg font-semibold">
               Create New Organization
             </Dialog.Title>
-            <Dialog.Close asChild>
-              <button className="text-gray-400 hover:text-gray-500">
-                <X className="h-4 w-4" />
-              </button>
-            </Dialog.Close>
+
           </div>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {error && (

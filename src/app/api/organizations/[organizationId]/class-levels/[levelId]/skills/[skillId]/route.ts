@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { UserRole } from "@prisma/client";
 import * as z from "zod";
 
 const skillSchema = z.object({
@@ -19,7 +18,7 @@ async function checkPermissions(userId: string, organizationId: string) {
     return false;
   }
 
-  if (user.role === UserRole.SUPER_ADMIN) {
+  if (user.role === 'SUPER_ADMIN') {
     return true;
   }
 

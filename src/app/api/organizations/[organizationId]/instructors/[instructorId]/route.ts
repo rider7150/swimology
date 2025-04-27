@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { UserRole } from "@prisma/client";
 import { hashPassword } from "@/lib/utils";
 
 export async function DELETE(
@@ -20,7 +19,7 @@ export async function DELETE(
       select: { role: true },
     });
 
-    if (!user || (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN)) {
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {
       return NextResponse.json(
         { error: "Only administrators can delete instructors" },
         { status: 403 }
@@ -28,7 +27,7 @@ export async function DELETE(
     }
 
     // Delete instructor and associated user in a transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       const instructor = await tx.instructor.findUnique({
         where: {
           id: params.instructorId,
@@ -83,7 +82,7 @@ export async function PUT(
       select: { role: true },
     });
 
-    if (!user || (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN)) {
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {
       return NextResponse.json(
         { error: "Only administrators can update instructors" },
         { status: 403 }
@@ -94,7 +93,7 @@ export async function PUT(
     const { name, email, password, phoneNumber } = data;
 
     // Update instructor and associated user in a transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       const instructor = await tx.instructor.findUnique({
         where: {
           id: params.instructorId,

@@ -1,6 +1,5 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import { UserRole } from "@prisma/client";
 
 export default withAuth(
   function middleware(req) {
@@ -15,7 +14,7 @@ export default withAuth(
     // Protected routes based on role
     if (path.startsWith("/organizations")) {
       // Allow access to specific organization routes for ADMIN role
-      if (token?.role === UserRole.ADMIN) {
+      if (token?.role === 'ADMIN') {
         // Extract organization ID from the URL
         const urlParts = path.split('/');
         const organizationIdIndex = urlParts.indexOf('organizations') + 1;
@@ -29,12 +28,12 @@ export default withAuth(
       }
 
       // For the organizations list page, only super admins can access
-      if (path === "/organizations" && token?.role !== UserRole.SUPER_ADMIN) {
+      if (path === "/organizations" && token?.role !== 'SUPER_ADMIN') {
         return NextResponse.redirect(new URL("/", req.url));
       }
 
       // For specific organization pages
-      if (token?.role !== UserRole.SUPER_ADMIN && token?.role !== UserRole.ADMIN) {
+      if (token?.role !== 'SUPER_ADMIN' && token?.role !== 'ADMIN') {
         return NextResponse.redirect(new URL("/", req.url));
       }
     }

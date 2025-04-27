@@ -3,7 +3,7 @@
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
-import { X, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { InstructorForm } from "./instructor-form";
 
 interface AddInstructorDialogProps {
@@ -28,11 +28,6 @@ export function AddInstructorDialog({ organizationId }: AddInstructorDialogProps
             <Dialog.Title className="text-lg font-semibold">
               Add New Instructor
             </Dialog.Title>
-            <Dialog.Close asChild>
-              <button className="text-gray-400 hover:text-gray-500">
-                <X className="h-4 w-4" />
-              </button>
-            </Dialog.Close>
           </div>
           <InstructorForm
             organizationId={organizationId}

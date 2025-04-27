@@ -115,17 +115,17 @@ export function AdminsTable({ organizationId }: AdminsTableProps) {
                       admin={admin}
                       onAdminUpdated={fetchAdmins}
                       trigger={
-                        <Button variant="ghost" size="sm">
-                          <PencilIcon className="h-4 w-4" />
-                        </Button>
+                          <Button variant="ghost" size="icon" className="text-indigo-300 hover:text-indigo-600r">
+                          <PencilIcon className="h-5 w-5" />
+                          </Button>
                       }
                     />
-                    <Button
+                    <Button className="text-indigo-300 hover:text-red-600"
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={() => setAdminToDelete(admin)}
                     >
-                      <Trash2Icon className="h-4 w-4 text-red-500" />
+                      <Trash2Icon className="h-5 w-5" />
                     </Button>
                   </div>
                 </td>

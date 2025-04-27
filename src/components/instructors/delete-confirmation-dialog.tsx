@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +28,7 @@ export function DeleteConfirmationDialog({ onDelete, isDeleting, itemType, itemN
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-10 w-10 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+          className="text-indigo-300 hover:text-red-600"
         >
           <Trash2 className="h-5 w-5" />
         </Button>
@@ -46,9 +46,6 @@ export function DeleteConfirmationDialog({ onDelete, isDeleting, itemType, itemN
               } This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogCancel className="h-8 w-8 p-0 flex items-center justify-center rounded-full">
-            <X className="h-4 w-4" />
-          </AlertDialogCancel>
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { Trash2Icon } from "lucide-react";
+
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
@@ -50,10 +51,10 @@ export function DeleteSkill({ organizationId, levelId, skillId, skillName }: Del
       <Dialog.Trigger asChild>
         <Button
           variant="ghost"
-          size="sm"
-          className="text-red-600 hover:text-red-900 hover:bg-red-50"
+          size="icon"
+          className="text-indigo-600 hover:text-red-600"
         >
-          <TrashIcon className="h-4 w-4" />
+          <Trash2Icon className="h-5 w-5" />
         </Button>
       </Dialog.Trigger>
       <Dialog.Portal>

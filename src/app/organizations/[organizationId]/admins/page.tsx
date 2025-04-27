@@ -2,9 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { OrganizationTabs } from "@/components/organizations/organization-tabs";
 import { AdminsTable } from "@/components/organizations/admins-table";
-import { UserRole } from "@prisma/client";
 
 interface PageProps {
   params: {
@@ -51,12 +49,12 @@ export default async function AdminsPage({ params }: PageProps) {
 
   // Allow access if user is super admin or an admin of this organization
   const isAuthorized =
-    user.role === UserRole.SUPER_ADMIN ||
-    (user.role === UserRole.ADMIN && user.admin?.organizationId === organizationId);
+    user.role === 'SUPER_ADMIN' ||
+    (user.role === 'ADMIN' && user.admin?.organizationId === organizationId);
 
   console.log('AdminsPage - Authorization check:', {
-    isSuperAdmin: user.role === UserRole.SUPER_ADMIN,
-    isOrgAdmin: user.role === UserRole.ADMIN,
+    isSuperAdmin: user.role === 'SUPER_ADMIN',
+    isOrgAdmin: user.role === 'ADMIN',
     requestedOrgId: organizationId,
     userOrgId: user.admin?.organizationId,
     isAuthorized,
@@ -84,8 +82,6 @@ export default async function AdminsPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <OrganizationTabs organizationId={organizationId} />
-      
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Manage Admins</h2>

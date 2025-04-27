@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { Prisma, SkillStatus, ClassLevel as PrismaClassLevel } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { format } from 'date-fns';
 
 interface ClassLevel {
@@ -22,7 +22,8 @@ interface Student {
     id: string;
     name: string;
     description: string | null;
-    status: SkillStatus;
+    status: string;
+    notes: string | null;
   }[];
   strengthNotes?: string;
   improvementNotes?: string;
@@ -40,26 +41,7 @@ interface Lesson {
   students: Student[];
 }
 
-type LessonWithEnrollments = Prisma.LessonGetPayload<{
-  include: {
-    classLevel: true;
-    instructor: {
-      include: {
-        user: true;
-      }
-    };
-    enrollments: {
-      include: {
-        child: true;
-        progress: {
-          include: {
-            skill: true;
-          }
-        }
-      }
-    }
-  }
-}>;
+type LessonWithEnrollments = any;
 
 interface ParentViewLesson {
   id: string;
@@ -117,7 +99,7 @@ export async function GET() {
       });
 
       // Transform the data to match the expected format
-      const transformedLessons = lessons.map((lesson) => {
+      const transformedLessons = lessons.map((lesson: any) => {
         // Format the time strings
         const startTime = format(lesson.startTime, 'HH:mm');
         const endTime = format(lesson.endTime, 'HH:mm');
@@ -136,7 +118,7 @@ export async function GET() {
             sortOrder: lesson.classLevel.sortOrder,
             description: lesson.classLevel.description
           },
-          students: lesson.enrollments.map(enrollment => ({
+          students: lesson.enrollments.map((enrollment: any) => ({
             id: enrollment.child.id,
             name: enrollment.child.name,
             enrollmentId: enrollment.id,
@@ -147,11 +129,12 @@ export async function GET() {
               sortOrder: lesson.classLevel.sortOrder,
               description: lesson.classLevel.description
             },
-            skills: enrollment.progress.map(p => ({
+            skills: enrollment.progress.map((p: any) => ({
               id: p.skill.id,
               name: p.skill.name,
               description: p.skill.description,
-              status: p.status
+              status: p.status,
+              notes: p.notes
             })),
             readyForNextLevel: enrollment.readyForNextLevel,
             strengthNotes: enrollment.strengthNotes || "",
@@ -196,7 +179,7 @@ export async function GET() {
       });
 
       // Transform data for parent view
-      const transformedLessons = lessons.map((lesson) => ({
+      const transformedLessons = lessons.map((lesson: any) => ({
         id: lesson.id,
         startDate: lesson.startDate,
         endDate: lesson.endDate,

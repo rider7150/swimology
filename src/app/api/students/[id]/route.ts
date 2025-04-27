@@ -101,6 +101,46 @@ export async function GET(
       },
     });
 
+    // If there are no SkillProgress records for this enrollment, create them
+    if (!enrollment.progress || enrollment.progress.length === 0) {
+      for (const skill of skills) {
+        await prisma.skillProgress.create({
+          data: {
+            skillId: skill.id,
+            enrollmentId: enrollment.id,
+            status: "NOT_STARTED",
+          },
+        });
+      }
+      // Refetch the enrollment with progress
+      const updatedChild = await prisma.child.findUnique({
+        where: { id: params.id },
+        include: {
+          enrollments: {
+            where: {
+              lesson: {
+                instructorId: instructor.id,
+                endDate: {
+                  gte: new Date(),
+                },
+              },
+            },
+            include: {
+              lesson: {
+                include: {
+                  classLevel: true,
+                },
+              },
+              progress: true,
+            },
+          },
+        },
+      });
+      if (updatedChild && updatedChild.enrollments.length > 0) {
+        child.enrollments[0].progress = updatedChild.enrollments[0].progress;
+      }
+    }
+
     // Transform the data to include all skills with their current status
     const studentData = {
       id: child.id,
@@ -118,9 +158,7 @@ export async function GET(
           id: skill.id,
           name: skill.name,
           description: skill.description,
-          status: progress?.status || "NOT_STARTED",
-          strengthNotes: progress?.strengthNotes || "",
-          improvementNotes: progress?.improvementNotes || "",
+          status: progress?.status || "NOT_STARTED"
         };
       })
     };

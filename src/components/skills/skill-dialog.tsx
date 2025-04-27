@@ -3,13 +3,15 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { SkillForm } from "./skill-form";
-import { PlusIcon, PencilIcon } from "@heroicons/react/24/outline";
-import { toast } from "sonner";
+import { PlusIcon } from "@heroicons/react/24/outline";
+import { PencilIcon } from "lucide-react";
+
+// import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { DeleteSkill } from "./delete-skill";
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 
 interface SkillDialogProps {
   organizationId: string;
@@ -31,12 +33,11 @@ export function SkillDialog({ organizationId, levelId, editingSkill, onSuccess }
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Trigger asChild>
           {editingSkill ? (
-            <button
-              type="button"
-              className="text-indigo-600 hover:text-indigo-900"
+            <Button variant="ghost" size="icon" 
+              className="text-indigo-300 hover:text-indigo-900"
             >
               <PencilIcon className="h-5 w-5" />
-            </button>
+            </Button>
           ) : (
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <PlusIcon className="h-5 w-5 mr-2" />

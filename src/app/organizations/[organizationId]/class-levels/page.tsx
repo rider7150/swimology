@@ -2,9 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { OrganizationTabs } from "@/components/organizations/organization-tabs";
 import { ClassLevelsTable } from "@/components/class-levels/class-levels-table";
-import { UserRole } from "@prisma/client";
 import { Suspense } from "react";
 
 interface PageProps {
@@ -38,8 +36,8 @@ export default async function ClassLevelsPage({ params }: PageProps) {
 
   // Allow access if user is super admin or an admin of this organization
   const isAuthorized =
-    user.role === UserRole.SUPER_ADMIN ||
-    (user.role === UserRole.ADMIN && user.admin?.organizationId === organizationId);
+    user.role === 'SUPER_ADMIN' ||
+    (user.role === 'ADMIN' && user.admin?.organizationId === organizationId);
 
   if (!isAuthorized) {
     redirect("/");
@@ -59,8 +57,6 @@ export default async function ClassLevelsPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <OrganizationTabs organizationId={organizationId} />
-      
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Manage Class Levels</h2>

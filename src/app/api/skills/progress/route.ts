@@ -10,6 +10,7 @@ const progressSchema = z.object({
   status: z.enum(["NOT_STARTED", "IN_PROGRESS", "COMPLETED"]),
   strengthNotes: z.string().optional(),
   improvementNotes: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -63,15 +64,11 @@ export async function POST(request: Request) {
       },
       update: {
         status: validatedData.status,
-        strengthNotes: validatedData.strengthNotes,
-        improvementNotes: validatedData.improvementNotes,
       },
       create: {
         skillId: validatedData.skillId,
         enrollmentId: validatedData.enrollmentId,
         status: validatedData.status,
-        strengthNotes: validatedData.strengthNotes,
-        improvementNotes: validatedData.improvementNotes,
       },
     });
 

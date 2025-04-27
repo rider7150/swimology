@@ -85,13 +85,14 @@ export async function POST(request: Request) {
       if (validatedData.lessonId) {
         const lesson = await tx.lesson.findUnique({
           where: { id: validatedData.lessonId },
+          include: { classLevel: { include: { skills: true } } },
         });
 
         if (!lesson) {
           throw new Error("Lesson not found");
         }
 
-        await tx.enrollment.create({
+        const enrollment = await tx.enrollment.create({
           data: {
             childId: newChild.id,
             lessonId: validatedData.lessonId,
@@ -99,6 +100,17 @@ export async function POST(request: Request) {
             endDate: lesson.endDate,
           },
         });
+
+        // Create SkillProgress for all skills in the class level
+        for (const skill of lesson.classLevel.skills) {
+          await tx.skillProgress.create({
+            data: {
+              skillId: skill.id,
+              enrollmentId: enrollment.id,
+              status: "NOT_STARTED",
+            },
+          });
+        }
       }
 
       return newChild;
@@ -173,7 +185,12 @@ export async function GET() {
 
     // Transform the data to include progress calculations
     return NextResponse.json(
-      children.map((child) => ({
+      children.map((child: { 
+        id: string;
+        name: string;
+        birthDate: Date;
+        enrollments: any[];
+      }) => ({
         id: child.id,
         name: child.name,
         birthDate: child.birthDate,
@@ -186,6 +203,7 @@ export async function GET() {
               name: skill.name,
               description: skill.description,
               status: 'status' in progressObj ? progressObj.status : "NOT_STARTED",
+              notes: 'notes' in progressObj ? progressObj.notes : "",
               strengthNotes: 'strengthNotes' in progressObj ? progressObj.strengthNotes : "",
               improvementNotes: 'improvementNotes' in progressObj ? progressObj.improvementNotes : ""
             };
@@ -199,6 +217,7 @@ export async function GET() {
 
           return {
             id: enrollment.lesson.id,
+            enrollmentId: enrollment.id,
             name: enrollment.lesson.classLevel.name,
             progress,
             skills,

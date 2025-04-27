@@ -12,21 +12,22 @@ interface OrganizationTabsProps {
 export function OrganizationTabs({ organizationId }: OrganizationTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
-  console.log('Current pathname:', pathname);
-  console.log('Organization ID:', organizationId);
+  //console.log('Current pathname:', pathname);
+  //console.log('Organization ID:', organizationId);
 
   const tabs = [
     { name: 'Overview', href: `/organizations/${organizationId}` },
     { name: 'Admins', href: `/organizations/${organizationId}/admins` },
     { name: 'Class Levels', href: `/organizations/${organizationId}/class-levels` },
     { name: 'Instructors & Lessons', href: `/organizations/${organizationId}/instructors` },
+    { name: 'Parents', href: `/organizations/${organizationId}/parents` },
   ];
 
-  console.log('Available tabs:', tabs.map(tab => ({ name: tab.name, href: tab.href })));
+  //console.log('Available tabs:', tabs.map(tab => ({ name: tab.name, href: tab.href })));
 
   const handleTabClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
-    console.log('Tab clicked, navigating to:', href);
+   // console.log('Tab clicked, navigating to:', href);
     router.push(href);
   };
 
@@ -35,7 +36,7 @@ export function OrganizationTabs({ organizationId }: OrganizationTabsProps) {
       <nav className="-mb-px flex space-x-8" aria-label="Tabs">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
-          console.log(`Tab ${tab.name}:`, { href: tab.href, isActive, currentPath: pathname });
+          //console.log(`Tab ${tab.name}:`, { href: tab.href, isActive, currentPath: pathname });
           return (
             <Link
               key={tab.name}

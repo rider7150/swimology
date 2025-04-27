@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { OrganizationTabs } from "@/components/organizations/organization-tabs";
 import { SkillDialog } from "@/components/skills/skill-dialog";
 import { Toaster } from "sonner";
 
@@ -44,7 +43,6 @@ export default async function SkillsPage({ params }: SkillsPageProps) {
 
   return (
     <>
-      <OrganizationTabs organizationId={organizationId} />
       <Toaster />
       <main className="py-10">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">

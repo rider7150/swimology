@@ -6,13 +6,6 @@ import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
 import { EditInstructorDialog } from "./edit-instructor-dialog";
 import { EditLessonDialog } from "@/components/lessons/edit-lesson-dialog";
 
-enum UserRole {
-  SUPER_ADMIN = "SUPER_ADMIN",
-  ADMIN = "ADMIN",
-  INSTRUCTOR = "INSTRUCTOR",
-  PARENT = "PARENT"
-}
-
 interface User {
   id: string;
   name: string | null;
@@ -125,17 +118,17 @@ export function InstructorList({ organizationId, instructors, classLevels }: Ins
 
   const formatTime = (timeString: string) => {
     if (!timeString || typeof timeString !== 'string') {
-      console.log('Invalid time string:', timeString);
+      //console.log('Invalid time string:', timeString);
       return '';
     }
     
     try {
-      console.log('Raw time string:', timeString);
+      //console.log('Raw time string:', timeString);
       
       // Convert the date string back to a Date object
       const date = new Date(timeString);
       if (isNaN(date.getTime())) {
-        console.log('Invalid date object');
+        //console.log('Invalid date object');
         return timeString;
       }
       
@@ -147,7 +140,7 @@ export function InstructorList({ organizationId, instructors, classLevels }: Ins
         timeZone: 'America/Los_Angeles'  // Use Pacific time since that's what we're seeing
       });
     } catch (error) {
-      console.error('Error formatting time:', error, 'timeString:', timeString);
+      //console.error('Error formatting time:', error, 'timeString:', timeString);
       return timeString;
     }
   };
@@ -167,7 +160,7 @@ export function InstructorList({ organizationId, instructors, classLevels }: Ins
         timeZone: 'UTC'
       }).format(new Date(date.toISOString()));
     } catch (error) {
-      console.error('Error formatting date:', error);
+      //console.error('Error formatting date:', error);
       return dateString;
     }
   };
@@ -258,8 +251,8 @@ export function InstructorList({ organizationId, instructors, classLevels }: Ins
                                   year: lesson.year,
                                   dayOfWeek: lesson.dayOfWeek,
                                   startTime: lesson.startTime,
-                                  endTime: lesson.endTime,
-                                  color: lesson.color
+                                  endTime: lesson.endTime //,
+                                  // color: lesson.color
                                 }}
                               />
                               <DeleteConfirmationDialog
