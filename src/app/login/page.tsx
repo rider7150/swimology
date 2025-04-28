@@ -2,12 +2,21 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { LoginForm } from "@/components/auth/login-form";
+import { prisma } from "@/lib/prisma";
 
 export default async function LoginPage() {
   const session = await getServerSession(authOptions);
 
   if (session) {
     redirect("/");
+  }
+
+  let dbStatus = "unknown";
+  try {
+    const users = await prisma.user.findMany({ take: 1 });
+    dbStatus = users.length ? "connected" : "connected, but no users";
+  } catch (e) {
+    dbStatus = "error: " + e.message;
   }
 
   return (
@@ -21,6 +30,7 @@ export default async function LoginPage() {
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
           <div className="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
+            <div>DB Status: {dbStatus}</div>
             <LoginForm />
           </div>
         </div>
