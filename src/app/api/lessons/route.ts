@@ -4,12 +4,46 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { format } from 'date-fns';
 
-interface ClassLevel {
+interface Skill {
   id: string;
   name: string;
-  description: string | null;
-  color: string;
-  sortOrder: number;
+  description?: string | null;
+}
+
+interface Progress {
+  skillId: string;
+  status: string;
+  notes?: string;
+}
+
+interface Enrollment {
+  id: string;
+  child: { id: string; name: string };
+  progress: Progress[];
+  readyForNextLevel?: boolean;
+  strengthNotes?: string;
+  improvementNotes?: string;
+}
+
+interface Lesson {
+  id: string;
+  classLevel: {
+    id: string;
+    name: string;
+    color?: string;
+    sortOrder: number;
+    description?: string | null;
+    skills: Skill[];
+  };
+  instructor: {
+    user: { name: string };
+  };
+  enrollments: Enrollment[];
+  startDate: Date;
+  endDate: Date;
+  dayOfWeek: number;
+  startTime: Date;
+  endTime: Date;
 }
 
 export async function GET() {
@@ -54,46 +88,46 @@ export async function GET() {
       });
 
       // Transform the data to match the expected format
-      const transformedLessons = lessons.map((lesson: unknown) => {
+      const transformedLessons = lessons.map((lesson: any) => {
         // Format the time strings
-        const startTime = format((lesson as any).startTime, 'HH:mm');
-        const endTime = format((lesson as any).endTime, 'HH:mm');
+        const startTime = format(lesson.startTime, 'HH:mm');
+        const endTime = format(lesson.endTime, 'HH:mm');
 
         return {
-          id: (lesson as any).id,
-          month: (lesson as any).startDate.getMonth() + 1,
-          year: (lesson as any).startDate.getFullYear(),
-          dayOfWeek: (lesson as any).dayOfWeek,
+          id: lesson.id,
+          month: lesson.startDate.getMonth() + 1,
+          year: lesson.startDate.getFullYear(),
+          dayOfWeek: lesson.dayOfWeek,
           startTime,
           endTime,
           classLevel: {
-            id: (lesson as any).classLevel.id,
-            name: (lesson as any).classLevel.name,
-            color: (lesson as any).classLevel.color,
-            sortOrder: (lesson as any).classLevel.sortOrder,
-            description: (lesson as any).classLevel.description
+            id: lesson.classLevel.id,
+            name: lesson.classLevel.name,
+            color: lesson.classLevel.color,
+            sortOrder: lesson.classLevel.sortOrder,
+            description: lesson.classLevel.description
           },
-          students: (lesson as any).enrollments.map((enrollment: unknown) => ({
-            id: (enrollment as any).child.id,
-            name: (enrollment as any).child.name,
-            enrollmentId: (enrollment as any).id,
+          students: lesson.enrollments.map((enrollment: any) => ({
+            id: enrollment.child.id,
+            name: enrollment.child.name,
+            enrollmentId: enrollment.id,
             classLevel: {
-              id: (lesson as any).classLevel.id,
-              name: (lesson as any).classLevel.name,
-              color: (lesson as any).classLevel.color,
-              sortOrder: (lesson as any).classLevel.sortOrder,
-              description: (lesson as any).classLevel.description
+              id: lesson.classLevel.id,
+              name: lesson.classLevel.name,
+              color: lesson.classLevel.color,
+              sortOrder: lesson.classLevel.sortOrder,
+              description: lesson.classLevel.description
             },
-            skills: (enrollment as any).progress.map((p: unknown) => ({
-              id: (p as any).skill.id,
-              name: (p as any).skill.name,
-              description: (p as any).skill.description,
-              status: (p as any).status,
-              notes: (p as any).notes
+            skills: enrollment.progress.map((p: any) => ({
+              id: p.skill ? p.skill.id : p.skillId,
+              name: p.skill ? p.skill.name : '',
+              description: p.skill ? p.skill.description : '',
+              status: p.status,
+              notes: p.notes
             })),
-            readyForNextLevel: (enrollment as any).readyForNextLevel,
-            strengthNotes: (enrollment as any).strengthNotes || "",
-            improvementNotes: (enrollment as any).improvementNotes || ""
+            readyForNextLevel: enrollment.readyForNextLevel,
+            strengthNotes: enrollment.strengthNotes || "",
+            improvementNotes: enrollment.improvementNotes || ""
           }))
         };
       });
@@ -134,19 +168,19 @@ export async function GET() {
       });
 
       // Transform data for parent view
-      const transformedLessons = lessons.map((lesson: unknown) => ({
-        id: (lesson as any).id,
-        startDate: (lesson as any).startDate,
-        endDate: (lesson as any).endDate,
-        dayOfWeek: (lesson as any).dayOfWeek,
-        startTime: (lesson as any).startTime,
-        endTime: (lesson as any).endTime,
+      const transformedLessons = lessons.map((lesson: any) => ({
+        id: lesson.id,
+        startDate: lesson.startDate,
+        endDate: lesson.endDate,
+        dayOfWeek: lesson.dayOfWeek,
+        startTime: lesson.startTime,
+        endTime: lesson.endTime,
         classLevel: {
-          name: (lesson as any).classLevel.name,
+          name: lesson.classLevel.name,
         },
         instructor: {
           user: {
-            name: (lesson as any).instructor.user.name,
+            name: lesson.instructor.user.name,
           },
         },
       }));

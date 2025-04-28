@@ -11,6 +11,50 @@ const childSchema = z.object({
   lessonId: z.string().optional(),
 });
 
+// Define interfaces for child, enrollment, skill, and progress at the top of the file
+interface Skill {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+interface Progress {
+  skillId: string;
+  status: string;
+  notes?: string;
+  strengthNotes?: string;
+  improvementNotes?: string;
+}
+interface ClassLevel {
+  id: string;
+  name: string;
+  sortOrder: number;
+  color?: string;
+  skills: Skill[];
+}
+interface Lesson {
+  id: string;
+  classLevel: ClassLevel;
+  startDate: Date;
+  endDate: Date;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}
+interface Enrollment {
+  id: string;
+  lesson: Lesson;
+  progress: Progress[];
+  readyForNextLevel?: boolean;
+  strengthNotes?: string;
+  improvementNotes?: string;
+}
+interface Child {
+  id: string;
+  name: string;
+  birthDate: Date;
+  enrollments: Enrollment[];
+}
+
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -150,60 +194,55 @@ export async function GET() {
 
     // Transform the data to include progress calculations
     return NextResponse.json(
-      children.map((child: { 
-        id: string;
-        name: string;
-        birthDate: Date;
-        enrollments: unknown[];
-      }) => ({
-        id: child.id,
-        name: child.name,
-        birthDate: child.birthDate,
-        lessons: child.enrollments.map((enrollment: unknown) => {
-          // Build skills array first
-          const skills = (enrollment as any).lesson.classLevel.skills.map((skill: unknown) => {
-            const progressObj = ((enrollment as any).progress as any[]).find((p: unknown) => (p as any).skillId === (skill as any).id) || {};
+      children.map((child) => {
+        const typedChild = child as any;
+        return {
+          id: typedChild.id,
+          name: typedChild.name,
+          birthDate: typedChild.birthDate,
+          lessons: typedChild.enrollments.map((enrollment: any) => {
+            // Map skills to expected type
+            const skills = (enrollment.lesson.classLevel.skills as Skill[]).map((skill) => {
+              const progressObj = (enrollment.progress as Progress[]).find((p) => p.skillId === skill.id) || {};
+              return {
+                id: skill.id,
+                name: skill.name,
+                description: skill.description,
+                status: 'status' in progressObj ? progressObj.status : "NOT_STARTED",
+                notes: 'notes' in progressObj ? progressObj.notes : "",
+                strengthNotes: 'strengthNotes' in progressObj ? progressObj.strengthNotes : "",
+                improvementNotes: 'improvementNotes' in progressObj ? progressObj.improvementNotes : ""
+              };
+            });
+            const completedSkills = skills.filter((skill) => skill.status === "COMPLETED").length;
+            const progress = skills.length > 0 ? Math.round((completedSkills / skills.length) * 100) : 0;
+            const startDate = new Date(enrollment.lesson.startDate);
+            const month = startDate.toLocaleString('default', { month: 'long' });
             return {
-              id: (skill as any).id,
-              name: (skill as any).name,
-              description: (skill as any).description,
-              status: 'status' in progressObj ? (progressObj as any).status : "NOT_STARTED",
-              notes: 'notes' in progressObj ? (progressObj as any).notes : "",
-              strengthNotes: 'strengthNotes' in progressObj ? (progressObj as any).strengthNotes : "",
-              improvementNotes: 'improvementNotes' in progressObj ? (progressObj as any).improvementNotes : ""
+              id: enrollment.lesson.id,
+              enrollmentId: enrollment.id,
+              name: enrollment.lesson.classLevel.name,
+              progress,
+              skills,
+              classLevel: {
+                id: enrollment.lesson.classLevel.id,
+                name: enrollment.lesson.classLevel.name,
+                sortOrder: enrollment.lesson.classLevel.sortOrder,
+                color: 'color' in enrollment.lesson.classLevel && enrollment.lesson.classLevel.color ? enrollment.lesson.classLevel.color : "#3B82F6"
+              },
+              month,
+              dayOfWeek: enrollment.lesson.dayOfWeek,
+              startTime: enrollment.lesson.startTime,
+              endTime: enrollment.lesson.endTime,
+              startDate: enrollment.lesson.startDate,
+              endDate: enrollment.lesson.endDate,
+              readyForNextLevel: enrollment.readyForNextLevel,
+              strengthNotes: enrollment.strengthNotes || "",
+              improvementNotes: enrollment.improvementNotes || ""
             };
-          });
-
-          const completedSkills = skills.filter((skill: unknown) => (skill as any).status === "COMPLETED").length;
-          const progress = skills.length > 0 ? Math.round((completedSkills / skills.length) * 100) : 0;
-
-          const startDate = new Date((enrollment as any).lesson.startDate);
-          const month = startDate.toLocaleString('default', { month: 'long' });
-
-          return {
-            id: (enrollment as any).lesson.id,
-            enrollmentId: (enrollment as any).id,
-            name: (enrollment as any).lesson.classLevel.name,
-            progress,
-            skills,
-            classLevel: {
-              id: (enrollment as any).lesson.classLevel.id,
-              name: (enrollment as any).lesson.classLevel.name,
-              sortOrder: (enrollment as any).lesson.classLevel.sortOrder,
-              color: 'color' in (enrollment as any).lesson.classLevel && (enrollment as any).lesson.classLevel.color ? (enrollment as any).lesson.classLevel.color : "#3B82F6"
-            },
-            month,
-            dayOfWeek: (enrollment as any).lesson.dayOfWeek,
-            startTime: (enrollment as any).lesson.startTime,
-            endTime: (enrollment as any).lesson.endTime,
-            startDate: (enrollment as any).lesson.startDate,
-            endDate: (enrollment as any).lesson.endDate,
-            readyForNextLevel: (enrollment as any).readyForNextLevel,
-            strengthNotes: (enrollment as any).strengthNotes || "",
-            improvementNotes: (enrollment as any).improvementNotes || ""
-          };
-        })
-      }))
+          })
+        };
+      })
     );
   } catch (error) {
     console.error("Error fetching children:", error);
