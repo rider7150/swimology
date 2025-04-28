@@ -32,6 +32,8 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        console.log("AUTH: Attempting login for", credentials?.email);
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
           include: {
@@ -53,7 +55,10 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
+        console.log("AUTH: User found in DB?", !!user, user);
+
         if (!user) {
+          console.log("AUTH: No user found for", credentials.email);
           return null;
         }
 
@@ -61,6 +66,8 @@ export const authOptions: NextAuthOptions = {
           credentials.password,
           user.password
         );
+
+        console.log("AUTH: Password valid?", isPasswordValid);
 
         if (!isPasswordValid) {
           return null;
