@@ -67,7 +67,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Get the organization ID based on the user's role
-        let organizationId = null;
+        let organizationId: string = "";
         if (user.admin) {
           organizationId = user.admin.organization.id;
         } else if (user.instructor) {

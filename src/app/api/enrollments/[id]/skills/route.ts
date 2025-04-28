@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { SkillStatus } from "@prisma/client";
 
 const updateSkillsSchema = z.object({
   skills: z.array(z.object({
@@ -51,18 +52,18 @@ export async function PUT(
     // Update or create progress records for each skill
     const progressUpdates = validatedData.skills.map(skill => ({
       where: {
-        enrollmentId_skillId: {
-          enrollmentId: enrollmentId,
+        skillId_enrollmentId: {
           skillId: skill.id,
+          enrollmentId: enrollmentId
         },
       },
       create: {
         enrollmentId: enrollmentId,
         skillId: skill.id,
-        status: skill.status,
+        status: SkillStatus[skill.status.toUpperCase() as keyof typeof SkillStatus],
       },
       update: {
-        status: skill.status,
+        status: SkillStatus[skill.status.toUpperCase() as keyof typeof SkillStatus],
       },
     }));
 
@@ -122,7 +123,7 @@ export async function GET(
     type Progress = {
       skillId: string;
       status: string;
-      notes?: string;
+      notes: string | null;
     };
 
     // Map skills with their progress

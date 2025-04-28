@@ -8,7 +8,7 @@ import * as z from "zod";
 
 const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
-  membershipIdRequired: z.boolean().default(false),
+  membershipIdRequired: z.boolean(),
   adminName: z.string().min(1, "Admin name is required"),
   adminEmail: z.string().email("Invalid email address"),
   adminPassword: z.string().min(6, "Password must be at least 6 characters"),

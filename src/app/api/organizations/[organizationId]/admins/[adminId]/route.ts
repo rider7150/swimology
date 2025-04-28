@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { Prisma } from '@prisma/client';
 
 export async function DELETE(
   req: Request,
@@ -81,7 +82,7 @@ export async function PATCH(
     const { name, email, password } = body;
 
     // Update the user record
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       name,
       email,
     };

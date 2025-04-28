@@ -1,80 +1,9 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import ParentDashboard from "@/components/parents/parent-dashboard";
 import { InstructorDashboard } from "@/components/instructors/instructor-dashboard";
-
-interface Skill {
-  id: string;
-  name: string;
-  description?: string;
-  strengthNotes?: string;
-  improvementNotes?: string;
-  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
-}
-
-interface ClassLevel {
-  id: string;
-  name: string;
-  sortOrder: number;
-  color?: string;
-  skills: Array<{ id: string; name: string; description?: string }>;
-}
-
-interface DbChild {
-  id: string;
-  name: string;
-  enrollments: Array<{
-    lesson: {
-      id: string;
-      classLevel: {
-        id: string;
-        name: string;
-        sortOrder: number;
-        color?: string;
-        skills: Array<{ id: string; name: string; description?: string }>;
-      };
-      dayOfWeek: number;
-      startTime: Date;
-      endTime: Date;
-      startDate: Date;
-      endDate: Date;
-    };
-    progress: Array<{
-      skillId: string;
-      status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
-    }>;
-    readyForNextLevel: boolean;
-    strengthNotes?: string | null;
-    improvementNotes?: string | null;
-  }>;
-}
-
-interface LessonWithDetails {
-  id: string;
-  startTime: Date;
-  endTime: Date;
-  startDate: Date;
-  endDate: Date;
-  dayOfWeek: number;
-  classLevel: ClassLevel;
-  enrollments: Array<{
-    id: string;
-    child: {
-      id: string;
-      name: string;
-    };
-    progress: Array<{
-      skillId: string;
-      status: string;
-    }>;
-    strengthNotes?: string | null;
-    improvementNotes?: string | null;
-    readyForNextLevel: boolean;
-  }>;
-}
+import { prisma } from "@/lib/prisma";
 
 async function getChildrenForParent(userId: string) {
   try {
@@ -112,46 +41,45 @@ async function getChildrenForParent(userId: string) {
       return [];
     }
 
-    return parent.children.map((child: any) => {
+    return parent.children.map((child: unknown) => {
       return {
-        id: child.id,
-        name: child.name,
-        lessons: child.enrollments.map((enrollment: any) => {
-          // Map skills to expected type right after fetching
-          enrollment.lesson.classLevel.skills = enrollment.lesson.classLevel.skills.map((skill: any) => ({
-            id: skill.id,
-            name: skill.name,
-            description: skill.description ?? null,
+        id: (child as any).id,
+        name: (child as any).name,
+        lessons: (child as any).enrollments.map((enrollment: unknown) => {
+          (enrollment as any).lesson.classLevel.skills = (enrollment as any).lesson.classLevel.skills.map((skill: unknown) => ({
+            id: (skill as any).id,
+            name: (skill as any).name,
+            description: (skill as any).description,
           }));
           // Build skills array by joining with progress
-          const skills = (enrollment.lesson.classLevel.skills as Array<{ id: string; name: string; description?: string }> ).map((skill) => {
-            const progress = enrollment.progress.find((p: any) => p.skillId === skill.id);
+          const skills = ((enrollment as any).lesson.classLevel.skills as Array<{ id: string; name: string; description?: string }> ).map((skill) => {
+            const progress = (enrollment as any).progress.find((p: unknown) => (p as any).skillId === skill.id);
             return {
               ...skill,
               status: progress?.status || "NOT_STARTED"
             };
           });
-          const completedSkills = skills.filter((s: any) => s.status === "COMPLETED").length;
+          const completedSkills = skills.filter((s: unknown) => (s as any).status === "COMPLETED").length;
           const progress = skills.length > 0 ? Math.round((completedSkills / skills.length) * 100) : 0;
           return {
-            id: enrollment.lesson.id,
-            name: enrollment.lesson.classLevel.name,
+            id: (enrollment as any).lesson.id,
+            name: (enrollment as any).lesson.classLevel.name,
             progress,
             skills,
             classLevel: {
-              id: enrollment.lesson.classLevel.id,
-              name: enrollment.lesson.classLevel.name,
-              sortOrder: enrollment.lesson.classLevel.sortOrder,
-              color: (enrollment.lesson.classLevel as any).color,
+              id: (enrollment as any).lesson.classLevel.id,
+              name: (enrollment as any).lesson.classLevel.name,
+              sortOrder: (enrollment as any).lesson.classLevel.sortOrder,
+              color: ((enrollment as any).lesson.classLevel as any).color,
             },
-            dayOfWeek: enrollment.lesson.dayOfWeek,
-            startTime: enrollment.lesson.startTime.toISOString(),
-            endTime: enrollment.lesson.endTime.toISOString(),
-            startDate: enrollment.lesson.startDate.toISOString(),
-            endDate: enrollment.lesson.endDate.toISOString(),
-            readyForNextLevel: enrollment.readyForNextLevel,
-            strengthNotes: enrollment.strengthNotes ?? undefined,
-            improvementNotes: enrollment.improvementNotes ?? undefined
+            dayOfWeek: (enrollment as any).lesson.dayOfWeek,
+            startTime: (enrollment as any).lesson.startTime,
+            endTime: (enrollment as any).lesson.endTime,
+            startDate: (enrollment as any).lesson.startDate,
+            endDate: (enrollment as any).lesson.endDate,
+            readyForNextLevel: (enrollment as any).readyForNextLevel,
+            strengthNotes: (enrollment as any).strengthNotes ?? undefined,
+            improvementNotes: (enrollment as any).improvementNotes ?? undefined
           };
         })
       };
@@ -208,48 +136,43 @@ async function getLessonsForInstructor(userId: string) {
       },
     });
 
-    return lessons.map((lesson: any) => {
-      // Map skills to expected type right after fetching
-      lesson.classLevel.skills = lesson.classLevel.skills.map((skill: any) => ({
-        id: skill.id,
-        name: skill.name,
-        description: skill.description ?? null,
+    return lessons.map((lesson: unknown) => {
+      (lesson as any).classLevel.skills = (lesson as any).classLevel.skills.map((skill: unknown) => ({
+        id: (skill as any).id,
+        name: (skill as any).name,
+        description: (skill as any).description,
       }));
-      const mappedSkills = lesson.classLevel.skills as Array<{ id: string; name: string; description?: string }>;
       return {
-        id: lesson.id,
-        name: `${lesson.classLevel.name} - ${formatTime(lesson.startTime)} ${getDayName(lesson.dayOfWeek)}`,
-        classLevel: {
-          id: lesson.classLevel.id,
-          name: lesson.classLevel.name,
-          color: (lesson.classLevel as any).color,
-          sortOrder: lesson.classLevel.sortOrder
-        },
-        month: lesson.startDate.getMonth() + 1,
-        year: lesson.startDate.getFullYear(),
-        dayOfWeek: lesson.dayOfWeek,
-        startTime: lesson.startTime.toISOString(),
-        endTime: lesson.endTime.toISOString(),
-        startDate: lesson.startDate.toISOString(),
-        endDate: lesson.endDate.toISOString(),
-        students: lesson.enrollments.map((enrollment: any) => ({
-          id: enrollment.child.id,
-          name: enrollment.child.name,
-          enrollmentId: enrollment.id,
+        id: (lesson as any).id,
+        name: (lesson as any).classLevel.name,
+        students: (lesson as any).enrollments.map((enrollment: unknown) => ({
+          id: (enrollment as any).child.id,
+          name: (enrollment as any).child.name,
           classLevel: {
-            id: lesson.classLevel.id,
-            name: lesson.classLevel.name,
-            color: (lesson.classLevel as any).color,
-            sortOrder: lesson.classLevel.sortOrder
+            id: (lesson as any).classLevel.id,
+            name: (lesson as any).classLevel.name,
+            color: ((lesson as any).classLevel as any).color,
+            sortOrder: (lesson as any).classLevel.sortOrder,
           },
-          strengthNotes: enrollment.strengthNotes ?? undefined,
-          improvementNotes: enrollment.improvementNotes ?? undefined,
-          readyForNextLevel: enrollment.readyForNextLevel,
-          skills: mappedSkills.map((skill: any) => ({
+          strengthNotes: (enrollment as any).strengthNotes ?? undefined,
+          improvementNotes: (enrollment as any).improvementNotes ?? undefined,
+          readyForNextLevel: (enrollment as any).readyForNextLevel,
+          skills: ((lesson as any).classLevel.skills as Array<{ id: string; name: string; description?: string }> ).map((skill) => ({
             ...skill,
-            status: (enrollment.progress.find((p: any) => p.skillId === skill.id)?.status as 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED') || 'NOT_STARTED'
+            status: ((enrollment as any).progress.find((p: unknown) => (p as any).skillId === skill.id)?.status as 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED') || 'NOT_STARTED'
           }))
         })),
+        classLevel: {
+          id: (lesson as any).classLevel.id,
+          name: (lesson as any).classLevel.name,
+          color: ((lesson as any).classLevel as any).color,
+          sortOrder: (lesson as any).classLevel.sortOrder,
+        },
+        month: ((lesson as any).startDate instanceof Date ? (lesson as any).startDate.getMonth() + 1 : new Date((lesson as any).startDate).getMonth() + 1),
+        year: ((lesson as any).startDate instanceof Date ? (lesson as any).startDate.getFullYear() : new Date((lesson as any).startDate).getFullYear()),
+        dayOfWeek: (lesson as any).dayOfWeek,
+        startTime: (lesson as any).startTime,
+        endTime: (lesson as any).endTime,
       };
     });
   } catch (error) {

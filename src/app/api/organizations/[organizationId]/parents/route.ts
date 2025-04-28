@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { Prisma } from '@prisma/client';
 
 export async function GET(
   request: Request,
@@ -25,13 +26,13 @@ export async function GET(
         },
       },
     });
-    const result = parents.map((parent: any) => ({
-      id: parent.id,
-      name: parent.user?.name || "",
-      email: parent.user?.email || "",
-      phone: parent.user?.phoneNumber || "",
-      childrenCount: parent.children.length,
-      enrollmentsCount: parent.children.reduce((acc: number, child: any) => acc + child.enrollments.length, 0),
+    const result = parents.map((parent: unknown) => ({
+      id: (parent as any).id,
+      name: (parent as any).user?.name || "",
+      email: (parent as any).user?.email || "",
+      phone: (parent as any).user?.phoneNumber || "",
+      childrenCount: (parent as any).children.length,
+      enrollmentsCount: (parent as any).children.reduce((acc: number, child: unknown) => acc + (child as any).enrollments.length, 0),
     }));
     return NextResponse.json(result);
   } catch (error) {
@@ -54,7 +55,7 @@ export async function PUT(
     if (!parent) {
       return NextResponse.json({ error: "Parent not found" }, { status: 404 });
     }
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       name,
       email,
       phoneNumber: phone,

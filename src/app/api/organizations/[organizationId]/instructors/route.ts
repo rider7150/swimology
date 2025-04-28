@@ -50,7 +50,7 @@ export async function POST(
     }
 
     // Create user and instructor in a transaction
-    const result = await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Generate a random password if none provided
       const password = validatedData.password || Math.random().toString(36).slice(-8);
       

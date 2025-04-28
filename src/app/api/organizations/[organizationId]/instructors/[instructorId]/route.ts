@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/utils";
+import { Prisma } from '@prisma/client';
 
 export async function DELETE(
   request: Request,
@@ -27,7 +28,7 @@ export async function DELETE(
     }
 
     // Delete instructor and associated user in a transaction
-    await prisma.$transaction(async (tx: any) => {
+    await prisma.$transaction(async (tx) => {
       const instructor = await tx.instructor.findUnique({
         where: {
           id: params.instructorId,
@@ -93,7 +94,7 @@ export async function PUT(
     const { name, email, password, phoneNumber } = data;
 
     // Update instructor and associated user in a transaction
-    await prisma.$transaction(async (tx: any) => {
+    await prisma.$transaction(async (tx) => {
       const instructor = await tx.instructor.findUnique({
         where: {
           id: params.instructorId,
@@ -109,7 +110,7 @@ export async function PUT(
       }
 
       // Update the user
-      const userUpdateData: any = {
+      const userUpdateData: Prisma.UserUpdateInput = {
         name,
         email,
       };

@@ -149,7 +149,7 @@ async function main() {
         description: level.description,
         organizationId: organization.id,
         capacity: 8,
-        displayOrder: level.displayOrder
+        sortOrder: level.displayOrder
       }
     });
 
