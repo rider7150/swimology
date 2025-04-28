@@ -16,7 +16,11 @@ export default async function LoginPage() {
     const users = await prisma.user.findMany({ take: 1 });
     dbStatus = users.length ? "connected" : "connected, but no users";
   } catch (e) {
-    dbStatus = "error: " + e.message;
+    if (e instanceof Error) {
+      dbStatus = "error: " + e.message;
+    } else {
+      dbStatus = "error: " + String(e);
+    }
   }
 
   return (
