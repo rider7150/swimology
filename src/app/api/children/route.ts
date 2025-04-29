@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 const childSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -11,12 +11,7 @@ const childSchema = z.object({
   lessonId: z.string().optional(),
 });
 
-// Define interfaces for child, enrollment, skill, and progress at the top of the file
-interface Skill {
-  id: string;
-  name: string;
-  description?: string | null;
-}
+// Define interfaces for the response types
 interface Progress {
   skillId: string;
   status: string;
@@ -24,13 +19,19 @@ interface Progress {
   strengthNotes?: string;
   improvementNotes?: string;
 }
+
 interface ClassLevel {
   id: string;
   name: string;
   sortOrder: number;
   color?: string;
-  skills: Skill[];
+  skills: Array<{
+    id: string;
+    name: string;
+    description?: string | null;
+  }>;
 }
+
 interface Lesson {
   id: string;
   classLevel: ClassLevel;
@@ -40,6 +41,7 @@ interface Lesson {
   startTime: string;
   endTime: string;
 }
+
 interface Enrollment {
   id: string;
   lesson: Lesson;
@@ -48,12 +50,51 @@ interface Enrollment {
   strengthNotes?: string;
   improvementNotes?: string;
 }
+
 interface Child {
   id: string;
   name: string;
   birthDate: Date;
   enrollments: Enrollment[];
 }
+
+// Type for the Prisma response with all includes
+type ChildWithEnrollments = {
+  id: string;
+  name: string;
+  birthDate: Date;
+  enrollments: Array<{
+    lesson: {
+      id: string;
+      classLevel: {
+        id: string;
+        name: string;
+        sortOrder: number;
+        color?: string;
+        skills: Array<{
+          id: string;
+          name: string;
+          description: string | null;
+        }>;
+      };
+      dayOfWeek: number;
+      startTime: string;
+      endTime: string;
+      startDate: Date;
+      endDate: Date;
+    };
+    progress: Array<{
+      skillId: string;
+      status: string;
+      notes?: string | null;
+      strengthNotes?: string | null;
+      improvementNotes?: string | null;
+    }>;
+    readyForNextLevel?: boolean;
+    strengthNotes?: string;
+    improvementNotes?: string;
+  }>;
+};
 
 export async function POST(request: Request) {
   try {
@@ -194,33 +235,31 @@ export async function GET() {
 
     // Transform the data to include progress calculations
     return NextResponse.json(
-      children.map((child) => {
-        const typedChild = child as any;
+      children.map((child: ChildWithEnrollments) => {
         return {
-          id: typedChild.id,
-          name: typedChild.name,
-          birthDate: typedChild.birthDate,
-          lessons: typedChild.enrollments.map((enrollment: any) => {
+          id: child.id,
+          name: child.name,
+          birthDate: child.birthDate,
+          lessons: child.enrollments.map((enrollment) => {
             // Map skills to expected type
-            const skills = (enrollment.lesson.classLevel.skills as Skill[]).map((skill) => {
-              const progressObj = (enrollment.progress as Progress[]).find((p) => p.skillId === skill.id) || {};
+            const skills = enrollment.lesson.classLevel.skills.map((skill) => {
+              const progressObj = enrollment.progress.find((p) => p.skillId === skill.id);
               return {
                 id: skill.id,
                 name: skill.name,
                 description: skill.description,
-                status: 'status' in progressObj ? progressObj.status : "NOT_STARTED",
-                notes: 'notes' in progressObj ? progressObj.notes : "",
-                strengthNotes: 'strengthNotes' in progressObj ? progressObj.strengthNotes : "",
-                improvementNotes: 'improvementNotes' in progressObj ? progressObj.improvementNotes : ""
+                status: progressObj?.status || "NOT_STARTED",
+                notes: progressObj?.notes || "",
+                strengthNotes: progressObj?.strengthNotes || "",
+                improvementNotes: progressObj?.improvementNotes || ""
               };
             });
+
             const completedSkills = skills.filter((skill) => skill.status === "COMPLETED").length;
             const progress = skills.length > 0 ? Math.round((completedSkills / skills.length) * 100) : 0;
-            const startDate = new Date(enrollment.lesson.startDate);
-            const month = startDate.toLocaleString('default', { month: 'long' });
+
             return {
               id: enrollment.lesson.id,
-              enrollmentId: enrollment.id,
               name: enrollment.lesson.classLevel.name,
               progress,
               skills,
@@ -228,15 +267,14 @@ export async function GET() {
                 id: enrollment.lesson.classLevel.id,
                 name: enrollment.lesson.classLevel.name,
                 sortOrder: enrollment.lesson.classLevel.sortOrder,
-                color: 'color' in enrollment.lesson.classLevel && enrollment.lesson.classLevel.color ? enrollment.lesson.classLevel.color : "#3B82F6"
+                color: enrollment.lesson.classLevel.color || "#3B82F6"
               },
-              month,
               dayOfWeek: enrollment.lesson.dayOfWeek,
               startTime: enrollment.lesson.startTime,
               endTime: enrollment.lesson.endTime,
               startDate: enrollment.lesson.startDate,
               endDate: enrollment.lesson.endDate,
-              readyForNextLevel: enrollment.readyForNextLevel,
+              readyForNextLevel: enrollment.readyForNextLevel || false,
               strengthNotes: enrollment.strengthNotes || "",
               improvementNotes: enrollment.improvementNotes || ""
             };

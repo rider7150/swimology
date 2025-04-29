@@ -117,7 +117,7 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
               type="text"
               id="name"
               {...register("name")}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -137,7 +137,7 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
               type="email"
               id="email"
               {...register("email")}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -157,7 +157,7 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
               type="password"
               id="password"
               {...register("password")}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">
@@ -178,7 +178,7 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
             <select
               id="organizationId"
               {...register("organizationId")}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             >
               <option value="">Select an organization</option>
               {organizations.map((org) => (
