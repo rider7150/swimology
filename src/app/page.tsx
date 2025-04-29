@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import ParentDashboard from "@/components/parents/parent-dashboard";
 import { InstructorDashboard } from "@/components/instructors/instructor-dashboard";
 import { prisma } from "@/lib/prisma";
+import { LandingPage } from '@/components/landing/landing-page';
 
 async function getChildrenForParent(userId: string) {
   try {
@@ -189,11 +190,11 @@ function getDayName(dayOfWeek: number) {
   return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
 }
 
-export default async function HomePage() {
+export default async function Home() {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    redirect("/api/auth/signin");
+  if (!session?.user) {
+    return <LandingPage />;
   }
 
   // Redirect super admins to organizations page

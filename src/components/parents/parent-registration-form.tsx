@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { signIn } from "next-auth/react";
 
 const registrationSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -73,8 +74,20 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
         throw new Error(error.error || "Failed to register");
       }
 
-      // Redirect to parent portal after successful registration
+      // After successful registration, sign in the user
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        throw new Error("Failed to sign in after registration");
+      }
+
+      // Redirect to parent portal after successful registration and sign in
       router.push(`/organizations/${data.organizationId}/parent-portal`);
+      router.refresh(); // Refresh to update session state
     } catch (error) {
       setError(error instanceof Error ? error.message : "Failed to register");
     } finally {
