@@ -4,10 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { LoginForm } from "@/components/auth/login-form";
 import { prisma } from "@/lib/prisma";
 
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
 export default async function LoginPage() {
-  console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
   const session = await getServerSession(authOptions);
 
