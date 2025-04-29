@@ -56,7 +56,7 @@ async function getChildrenForParent(userId: string) {
           const skills = ((enrollment as any).lesson.classLevel.skills as Array<{ id: string; name: string; description?: string }> ).map((skill) => {
             const progress = (enrollment as any).progress.find((p: unknown) => (p as any).skillId === skill.id);
             return {
-              ...skill,
+            ...skill,
               status: progress?.status || "NOT_STARTED"
             };
           });

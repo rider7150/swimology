@@ -266,15 +266,15 @@ export function ClassLevelsTable({ organizationId }: ClassLevelsTableProps) {
                   </th>
                 </tr>
               </thead>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={classLevels.map((level) => level.id)}
-                  strategy={verticalListSortingStrategy}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
                 >
+                  <SortableContext
+                    items={classLevels.map((level) => level.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
                   <tbody className="divide-y divide-gray-200">
                     {classLevels.map((level) => (
                       <SortableRow
@@ -285,8 +285,8 @@ export function ClassLevelsTable({ organizationId }: ClassLevelsTableProps) {
                       />
                     ))}
                   </tbody>
-                </SortableContext>
-              </DndContext>
+                  </SortableContext>
+                </DndContext>
             </table>
           </div>
         </div>

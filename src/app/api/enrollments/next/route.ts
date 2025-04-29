@@ -28,27 +28,27 @@ export async function POST(request: Request) {
     });
 
     // Find the most recent previous enrollment for this child
-    const prevEnrollment = await prisma.enrollment.findFirst({
-      where: {
-        childId,
+      const prevEnrollment = await prisma.enrollment.findFirst({
+        where: {
+          childId,
         id: { not: newEnrollment.id },
-      },
-      orderBy: { startDate: "desc" },
+        },
+        orderBy: { startDate: "desc" },
       include: { lesson: { include: { classLevel: true } }, progress: true },
-    });
+      });
 
     let copied = false;
     if (prevEnrollment && prevEnrollment.lesson.classLevel.id === nextLesson.classLevel.id) {
       // Copy all SkillProgress details from previous enrollment
-      for (const prog of prevEnrollment.progress) {
-        await prisma.skillProgress.create({
-          data: {
-            skillId: prog.skillId,
-            enrollmentId: newEnrollment.id,
-            status: prog.status,
-          },
-        });
-      }
+        for (const prog of prevEnrollment.progress) {
+          await prisma.skillProgress.create({
+            data: {
+              skillId: prog.skillId,
+              enrollmentId: newEnrollment.id,
+              status: prog.status,
+            },
+          });
+        }
       copied = true;
     }
 

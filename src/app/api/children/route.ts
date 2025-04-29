@@ -38,8 +38,8 @@ interface Lesson {
   startDate: Date;
   endDate: Date;
   dayOfWeek: number;
-  startTime: string;
-  endTime: string;
+  startTime: Date;
+  endTime: Date;
 }
 
 interface Enrollment {
@@ -58,19 +58,16 @@ interface Child {
   enrollments: Enrollment[];
 }
 
-// Type for the Prisma response with all includes
-type ChildWithEnrollments = {
-  id: string;
-  name: string;
-  birthDate: Date;
+type PrismaChild = Awaited<ReturnType<typeof prisma.child.findMany>>[number];
+
+type ChildWithEnrollments = PrismaChild & {
   enrollments: Array<{
     lesson: {
-      id: string;
       classLevel: {
         id: string;
         name: string;
         sortOrder: number;
-        color?: string;
+        color: string | null;
         skills: Array<{
           id: string;
           name: string;
@@ -86,15 +83,47 @@ type ChildWithEnrollments = {
     progress: Array<{
       skillId: string;
       status: string;
-      notes?: string | null;
-      strengthNotes?: string | null;
-      improvementNotes?: string | null;
+      notes: string | null;
+      strengthNotes: string | null;
+      improvementNotes: string | null;
     }>;
-    readyForNextLevel?: boolean;
-    strengthNotes?: string;
-    improvementNotes?: string;
+    readyForNextLevel: boolean | null;
+    strengthNotes: string | null;
+    improvementNotes: string | null;
   }>;
 };
+
+type InferredChild = Awaited<ReturnType<typeof getChildren>>;
+type DbChild = InferredChild[number];
+
+async function getChildren(parentId: string) {
+  return prisma.child.findMany({
+    where: {
+      parentId: parentId,
+    },
+    include: {
+      enrollments: {
+        where: {
+          endDate: {
+            gte: new Date(),
+          },
+        },
+        include: {
+          lesson: {
+            include: {
+              classLevel: {
+                include: {
+                  skills: true,
+                },
+              },
+            },
+          },
+          progress: true,
+        },
+      },
+    },
+  });
+}
 
 export async function POST(request: Request) {
   try {
@@ -206,56 +235,32 @@ export async function GET() {
     }
 
     // Get all children with their enrollments and progress
-    const children = await prisma.child.findMany({
-      where: {
-        parentId: parent.id,
-      },
-      include: {
-        enrollments: {
-          where: {
-            endDate: {
-              gte: new Date(), // Only get current enrollments
-            },
-          },
-          include: {
-            lesson: {
-              include: {
-                classLevel: {
-                  include: {
-                    skills: true
-                  }
-                }
-              }
-            },
-            progress: true,
-          },
-        },
-      },
-    });
+    const children = await getChildren(parent.id);
 
     // Transform the data to include progress calculations
     return NextResponse.json(
-      children.map((child: ChildWithEnrollments) => {
+      children.map((child: Awaited<ReturnType<typeof getChildren>>[number]) => {
         return {
           id: child.id,
           name: child.name,
           birthDate: child.birthDate,
-          lessons: child.enrollments.map((enrollment) => {
+          lessons: child.enrollments.map((enrollment: typeof child.enrollments[number]) => {
+            type Skill = typeof enrollment.lesson.classLevel.skills[number];
+            type Progress = typeof enrollment.progress[number];
+
             // Map skills to expected type
-            const skills = enrollment.lesson.classLevel.skills.map((skill) => {
-              const progressObj = enrollment.progress.find((p) => p.skillId === skill.id);
+            const skills = enrollment.lesson.classLevel.skills.map((skill: Skill) => {
+              const progressObj = enrollment.progress.find((p: Progress) => p.skillId === skill.id);
               return {
                 id: skill.id,
                 name: skill.name,
                 description: skill.description,
                 status: progressObj?.status || "NOT_STARTED",
-                notes: progressObj?.notes || "",
-                strengthNotes: progressObj?.strengthNotes || "",
-                improvementNotes: progressObj?.improvementNotes || ""
+                notes: progressObj?.notes || ""
               };
             });
 
-            const completedSkills = skills.filter((skill) => skill.status === "COMPLETED").length;
+            const completedSkills = skills.filter((skill: { status: string }) => skill.status === "COMPLETED").length;
             const progress = skills.length > 0 ? Math.round((completedSkills / skills.length) * 100) : 0;
 
             return {
@@ -270,8 +275,8 @@ export async function GET() {
                 color: enrollment.lesson.classLevel.color || "#3B82F6"
               },
               dayOfWeek: enrollment.lesson.dayOfWeek,
-              startTime: enrollment.lesson.startTime,
-              endTime: enrollment.lesson.endTime,
+              startTime: enrollment.lesson.startTime.toISOString(),
+              endTime: enrollment.lesson.endTime.toISOString(),
               startDate: enrollment.lesson.startDate,
               endDate: enrollment.lesson.endDate,
               readyForNextLevel: enrollment.readyForNextLevel || false,

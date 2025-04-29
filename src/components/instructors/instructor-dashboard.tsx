@@ -303,13 +303,13 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
           variant: "destructive",
         });
       } else {
-        // Refresh data
-        await refreshLessons();
+      // Refresh data
+      await refreshLessons();
         setSelectedStudent(null);
-        toast({
-          title: "Success",
-          description: "All changes saved successfully",
-        });
+      toast({
+        title: "Success",
+        description: "All changes saved successfully",
+      });
       }
     } catch (error) {
       console.error("Error saving changes:", error);
@@ -567,20 +567,20 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                                             age = differenceInYears(new Date(), new Date(student.birthDate));
                                           }
                                           return (
-                                            <button
-                                              key={`${lesson.id}-${student.id}`}
-                                              onClick={() => {
-                                                setSelectedStudent(student);
-                                                setSelectedEnrollment({
-                                                  id: student.enrollmentId,
-                                                  readyForNextLevel: student.readyForNextLevel,
-                                                  classLevel: student.classLevel,
-                                                  strengthNotes: student.strengthNotes,
-                                                  improvementNotes: student.improvementNotes
-                                                });
-                                              }}
-                                              className="block text-left w-full"
-                                            >
+                                          <button
+                                            key={`${lesson.id}-${student.id}`}
+                                            onClick={() => {
+                                              setSelectedStudent(student);
+                                              setSelectedEnrollment({
+                                                id: student.enrollmentId,
+                                                readyForNextLevel: student.readyForNextLevel,
+                                                classLevel: student.classLevel,
+                                                strengthNotes: student.strengthNotes,
+                                                improvementNotes: student.improvementNotes
+                                              });
+                                            }}
+                                            className="block text-left w-full"
+                                          >
                                               <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow relative">
                                                 <div className="flex items-center justify-between mb-2">
                                                   <div className="flex items-center">
@@ -593,29 +593,29 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                                                   </div>
                                                 </div>
                                                 <div className="flex items-center mt-1 mb-2 justify-between">
-                                                  <span
-                                                    className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
-                                                    style={{ backgroundColor: student.classLevel.color || "#3B82F6" }}
-                                                  >
-                                                    {student.classLevel.name}
-                                                  </span>
+                                                <span 
+                                                  className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
+                                                  style={{ backgroundColor: student.classLevel.color || "#3B82F6" }}
+                                                >
+                                                  {student.classLevel.name}
+                                                </span>
                                                   {student.readyForNextLevel && (
                                                     <GraduationCap className="h-6 w-6 text-green-600 ml-2" />
                                                   )}
+                                              </div>
+                                              <div className="space-y-1">
+                                                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                  <div
+                                                    className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                                                    style={{ width: `${(student.skills.filter(s => s.status === "COMPLETED").length / student.skills.length) * 100}%` }}
+                                                  />
                                                 </div>
-                                                <div className="space-y-1">
-                                                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                    <div
-                                                      className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                                                      style={{ width: `${(student.skills.filter(s => s.status === "COMPLETED").length / student.skills.length) * 100}%` }}
-                                                    />
-                                                  </div>
-                                                  <div className="text-xs text-gray-500 text-right">
-                                                    {student.skills.filter(s => s.status === "COMPLETED").length} of {student.skills.length} skills completed
-                                                  </div>
+                                                <div className="text-xs text-gray-500 text-right">
+                                                  {student.skills.filter(s => s.status === "COMPLETED").length} of {student.skills.length} skills completed
                                                 </div>
                                               </div>
-                                            </button>
+                                            </div>
+                                          </button>
                                           );
                                         })
                                       )}
