@@ -404,106 +404,105 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {children.map((child) => {
-            // Sort lessons by startDate descending
-            const sortedLessons = [...child.lessons].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-            let age = null;
-            if (child.birthDate) {
-              age = differenceInYears(new Date(), new Date(child.birthDate));
-            }
-            return (
-              <div key={child.id}>
-                <div className="flex flex-wrap gap-6">
-                  {sortedLessons.map((currentLesson) => (
-                    <div
-                      key={currentLesson.id}
-                      className="relative bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow flex flex-col h-full justify-between mb-0 w-[350px] cursor-pointer"
+          {/* Get all lessons from all children and sort them by startDate */}
+          {children
+            .flatMap(child => child.lessons.map(lesson => ({
+              ...lesson,
+              child,
+              classLevel: lesson.classLevel // Ensure classLevel is explicitly included
+            })))
+            .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+            .map(({ child, ...currentLesson }) => {
+              let age = null;
+              if (child.birthDate) {
+                age = differenceInYears(new Date(), new Date(child.birthDate));
+              }
+              return (
+                <div
+                  key={`${child.id}-${currentLesson.enrollmentId}`}
+                  className="relative bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow flex flex-col h-full justify-between mb-0 w-[350px] cursor-pointer"
+                  onClick={e => {
+                    if ((e.target as HTMLElement).closest('button')) return;
+                    setSelectedChild(child);
+                    setSelectedLesson(currentLesson);
+                  }}
+                >
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <button
                       onClick={e => {
-                        // Prevent click if the event target is a button or inside a button
-                        if ((e.target as HTMLElement).closest('button')) return;
-                        setSelectedChild(child);
-                        setSelectedLesson(currentLesson);
+                        e.stopPropagation();
+                        openNextLessonModal(child, currentLesson);
                       }}
+                      className="text-indigo-300 hover:text-blue-700"
+                      title="Select Next Lesson"
                     >
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            openNextLessonModal(child, currentLesson);
-                          }}
-                          className="text-indigo-300 hover:text-blue-700"
-                          title="Select Next Lesson"
+                      <ArrowRightCircle className="h-5 w-5" />
+                    </button>
+                    <DeleteConfirmationDialog
+                      onDelete={async () => {
+                        setIsDeleting(true);
+                        try {
+                          const res = await fetch(`/api/enrollments/${currentLesson.enrollmentId}`, { method: 'DELETE' });
+                          if (!res.ok) throw new Error('Failed to delete enrollment');
+                          if (child.lessons.length === 1) {
+                            await fetch(`/api/children/${child.id}`, { method: 'DELETE' });
+                          }
+                          refreshChildren();
+                        } catch (error) {
+                          alert(error instanceof Error ? error.message : 'Failed to delete enrollment');
+                        } finally {
+                          setIsDeleting(false);
+                        }
+                      }}
+                      isDeleting={isDeleting && deletingChildId === child.id}
+                      itemType="lesson"
+                      itemName={currentLesson.classLevel?.name || currentLesson.name}
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-2">
+                      <h2 className="text-xl font-semibold flex items-center">
+                        {child.name}
+                        {age !== null && (
+                          <span className="ml-2 text-gray-500 text-base">({age})</span>
+                        )}
+                      </h2>
+                      <div className="flex items-center justify-between mt-1">
+                        <span
+                          className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
+                          style={{ backgroundColor: currentLesson.classLevel?.color || '#3b82f6' }}
                         >
-                          <ArrowRightCircle className="h-5 w-5" />
-                        </button>
-                        <DeleteConfirmationDialog
-                          onDelete={async () => {
-                            setIsDeleting(true);
-                            try {
-                              const res = await fetch(`/api/enrollments/${currentLesson.enrollmentId}`, { method: 'DELETE' });
-                              if (!res.ok) throw new Error('Failed to delete enrollment');
-                              if (child.lessons.length === 1) {
-                                await fetch(`/api/children/${child.id}`, { method: 'DELETE' });
-                              }
-                              refreshChildren();
-                            } catch (error) {
-                              alert(error instanceof Error ? error.message : 'Failed to delete enrollment');
-                            } finally {
-                              setIsDeleting(false);
-                            }
-                          }}
-                          isDeleting={isDeleting && deletingChildId === child.id}
-                          itemType="lesson"
-                          itemName={currentLesson.classLevel?.name || currentLesson.name}
-                        />
-                      </div>
-                      <div>
-                        <div className="mb-2">
-                          <h2 className="text-xl font-semibold flex items-center">
-                            {child.name}
-                            {age !== null && (
-                              <span className="ml-2 text-gray-500 text-base">({age})</span>
-                            )}
-                          </h2>
-                          <div className="flex items-center justify-between mt-1">
-                            <span
-                              className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
-                              style={{ backgroundColor: currentLesson.classLevel?.color || '#3b82f6' }}
-                            >
-                              {currentLesson.classLevel?.name || currentLesson.name}
-                            </span>
-                            {currentLesson.readyForNextLevel && (
-                              <GraduationCap className="h-6 w-6 text-green-600 ml-2" />
-                            )}
-                          </div>
-                        </div>
-                        {!currentLesson ? (
-                          <p className="text-gray-500">Not enrolled in any lessons yet.</p>
-                        ) : (
-                          <div className="space-y-1">
-                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                                style={{ width: `${currentLesson.progress}%` }}
-                              />
-                            </div>
-                            <div className="text-xs text-gray-500 text-right">
-                              {currentLesson.skills?.filter(s => s.status === "COMPLETED").length || 0} of {currentLesson.skills?.length || 0} skills completed
-                            </div>
-                          </div>
+                          {currentLesson.classLevel?.name || currentLesson.name}
+                        </span>
+                        {currentLesson.readyForNextLevel && (
+                          <GraduationCap className="h-6 w-6 text-green-600 ml-2" />
                         )}
                       </div>
-                      {currentLesson && (
-                        <div className="mt-2 text-xs text-gray-500 font-normal">
-                          { format(new Date(currentLesson.startDate), 'MMMM yyyy')} • {format(new Date(currentLesson.startTime), 'EEEE')}s • {format(new Date(currentLesson.startTime), 'h:mm')} - {format(new Date(currentLesson.endTime), 'h:mm a')}
-                        </div>
-                      )}
                     </div>
-                  ))}
+                    {!currentLesson ? (
+                      <p className="text-gray-500">Not enrolled in any lessons yet.</p>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                            style={{ width: `${currentLesson.progress}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-500 text-right">
+                          {currentLesson.skills?.filter(s => s.status === "COMPLETED").length || 0} of {currentLesson.skills?.length || 0} skills completed
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {currentLesson && (
+                    <div className="mt-2 text-xs text-gray-500 font-normal">
+                      { format(new Date(currentLesson.startDate), 'MMMM yyyy')} • {format(new Date(currentLesson.startTime), 'EEEE')}s • {format(new Date(currentLesson.startTime), 'h:mm')} - {format(new Date(currentLesson.endTime), 'h:mm a')}
+                    </div>
+                  )}
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}
 

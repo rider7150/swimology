@@ -80,7 +80,8 @@ async function getChildrenForParent(userId: string) {
             endDate: (enrollment as any).lesson.endDate,
             readyForNextLevel: (enrollment as any).readyForNextLevel,
             strengthNotes: (enrollment as any).strengthNotes ?? undefined,
-            improvementNotes: (enrollment as any).improvementNotes ?? undefined
+            improvementNotes: (enrollment as any).improvementNotes ?? undefined,
+            enrollmentId: (enrollment as any).id
           };
         })
       };
@@ -238,8 +239,7 @@ export default async function Home() {
         </div>
       );
     } else {
-      const { OrganizationDetails } = await import('@/components/organizations/organization-details');
-      dashboardContent = <OrganizationDetails organization={organization} />;
+      redirect(`/organizations/${organization.id}`);
     }
   }
 

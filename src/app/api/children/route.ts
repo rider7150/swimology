@@ -103,11 +103,6 @@ async function getChildren(parentId: string) {
     },
     include: {
       enrollments: {
-        where: {
-          endDate: {
-            gte: new Date(),
-          },
-        },
         include: {
           lesson: {
             include: {
@@ -171,6 +166,23 @@ export async function POST(request: Request) {
           throw new Error("Lesson not found");
         }
 
+        // Check if child is already enrolled in a class of the same level
+        const existingEnrollment = await tx.enrollment.findFirst({
+          where: {
+            childId: newChild.id,
+            lesson: {
+              classLevelId: lesson.classLevelId,
+              endDate: {
+                gte: new Date()
+              }
+            }
+          }
+        });
+
+        if (existingEnrollment) {
+          throw new Error("Child is already enrolled in a class of this level");
+        }
+
         const enrollment = await tx.enrollment.create({
           data: {
             childId: newChild.id,
@@ -222,22 +234,19 @@ export async function GET() {
       );
     }
 
-    // Get the parent record
     const parent = await prisma.parent.findFirst({
       where: { userId: session.user.id },
     });
 
     if (!parent) {
       return NextResponse.json(
-        { error: "Parent record not found" },
+        { error: "Parent not found" },
         { status: 404 }
       );
     }
 
-    // Get all children with their enrollments and progress
     const children = await getChildren(parent.id);
 
-    // Transform the data to include progress calculations
     return NextResponse.json(
       children.map((child: Awaited<ReturnType<typeof getChildren>>[number]) => {
         return {
@@ -281,7 +290,8 @@ export async function GET() {
               endDate: enrollment.lesson.endDate,
               readyForNextLevel: enrollment.readyForNextLevel || false,
               strengthNotes: enrollment.strengthNotes || "",
-              improvementNotes: enrollment.improvementNotes || ""
+              improvementNotes: enrollment.improvementNotes || "",
+              enrollmentId: enrollment.id
             };
           })
         };

@@ -124,6 +124,8 @@ export default async function InstructorsPage({ params }: PageProps) {
       dayOfWeek: lesson.dayOfWeek,
       startTime: lesson.startTime.toISOString(),
       endTime: lesson.endTime.toISOString(),
+      month: new Date(lesson.startDate).getMonth() + 1,
+      year: new Date(lesson.startDate).getFullYear(),
       classLevel: lesson.classLevel
     }))
   }));

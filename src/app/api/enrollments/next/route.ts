@@ -46,6 +46,7 @@ export async function POST(request: Request) {
               skillId: prog.skillId,
               enrollmentId: newEnrollment.id,
               status: prog.status,
+              notes: prog.notes
             },
           });
         }
