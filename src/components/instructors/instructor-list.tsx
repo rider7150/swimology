@@ -70,6 +70,30 @@ export function InstructorList({ organizationId, instructors, classLevels }: Ins
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  // Group lessons by month
+  const groupLessonsByMonth = (lessons: Lesson[]) => {
+    const grouped = lessons.reduce((acc, lesson) => {
+      const monthKey = `${months[lesson.month - 1]} ${lesson.year}`;
+      if (!acc[monthKey]) {
+        acc[monthKey] = [];
+      }
+      acc[monthKey].push(lesson);
+      return acc;
+    }, {} as Record<string, Lesson[]>);
+
+    // Sort lessons within each month by day and time
+    Object.keys(grouped).forEach(month => {
+      grouped[month].sort((a, b) => {
+        if (a.dayOfWeek !== b.dayOfWeek) {
+          return a.dayOfWeek - b.dayOfWeek;
+        }
+        return a.startTime.localeCompare(b.startTime);
+      });
+    });
+
+    return grouped;
+  };
+
   const handleDeleteInstructor = async (instructorId: string) => {
     try {
       setLoading(true);
@@ -173,102 +197,108 @@ export function InstructorList({ organizationId, instructors, classLevels }: Ins
             <p className="text-sm text-gray-500">No instructors added yet.</p>
           ) : (
             <div className="space-y-6">
-              {instructors.map((instructor) => (
-                <div
-                  key={instructor.id}
-                  className="border rounded-lg p-4 space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{instructor.user.name || 'Unnamed Instructor'}</h4>
-                      <p className="text-sm text-gray-500">
-                        {instructor.user.email}
-                      </p>
-                      {instructor.phoneNumber && (
+              {instructors.map((instructor) => {
+                const lessonsByMonth = groupLessonsByMonth(instructor.lessons);
+                return (
+                  <div
+                    key={instructor.id}
+                    className="border rounded-lg p-4 space-y-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">{instructor.user.name || 'Unnamed Instructor'}</h4>
                         <p className="text-sm text-gray-500">
-                          {instructor.phoneNumber}
+                          {instructor.user.email}
                         </p>
+                        {instructor.phoneNumber && (
+                          <p className="text-sm text-gray-500">
+                            {instructor.phoneNumber}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <EditInstructorDialog
+                          organizationId={organizationId}
+                          instructor={{
+                            id: instructor.id,
+                            userId: instructor.userId,
+                            phoneNumber: instructor.phoneNumber,
+                            user: {
+                              name: instructor.user.name || 'Unnamed Instructor',
+                              email: instructor.user.email
+                            }
+                          }}
+                        />
+                        <DeleteConfirmationDialog
+                          onDelete={() => handleDeleteInstructor(instructor.id)}
+                          isDeleting={loading}
+                          itemType="instructor"
+                          itemName={instructor.user.name || 'Unnamed Instructor'}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Assigned Lessons</h5>
+                      {instructor.lessons.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                          No lessons assigned yet.
+                        </p>
+                      ) : (
+                        <div className="space-y-6">
+                          {Object.entries(lessonsByMonth).map(([month, lessons]) => (
+                            <div key={month} className="space-y-2">
+                              <h6 className="text-sm font-medium text-gray-700">{month}</h6>
+                              <ul className="space-y-2">
+                                {lessons.map((lesson) => (
+                                  <li key={lesson.id} className="py-3 flex justify-between items-center">
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {lesson.classLevel.name}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {days[lesson.dayOfWeek]} at {formatTime(lesson.startTime)} - {formatTime(lesson.endTime)}
+                                      </p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <EditLessonDialog
+                                        organizationId={organizationId}
+                                        classLevels={classLevels}
+                                        instructors={instructors.map(i => ({
+                                          id: i.id,
+                                          user: {
+                                            name: i.user.name || 'Unnamed Instructor'
+                                          }
+                                        }))}
+                                        lesson={{
+                                          id: lesson.id,
+                                          classLevelId: lesson.classLevelId,
+                                          instructorId: instructor.id,
+                                          month: lesson.month,
+                                          year: lesson.year,
+                                          dayOfWeek: lesson.dayOfWeek,
+                                          startTime: lesson.startTime,
+                                          endTime: lesson.endTime
+                                        }}
+                                      />
+                                      <DeleteConfirmationDialog
+                                        onDelete={() => handleDeleteLesson(lesson.id)}
+                                        isDeleting={loading}
+                                        itemType="lesson"
+                                        itemName={instructor.user.name || 'Unnamed Instructor'}
+                                      />
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <EditInstructorDialog
-                        organizationId={organizationId}
-                        instructor={{
-                          id: instructor.id,
-                          userId: instructor.userId,
-                          phoneNumber: instructor.phoneNumber,
-                          user: {
-                            name: instructor.user.name || 'Unnamed Instructor',
-                            email: instructor.user.email
-                          }
-                        }}
-                      />
-                      <DeleteConfirmationDialog
-                        onDelete={() => handleDeleteInstructor(instructor.id)}
-                        isDeleting={loading}
-                        itemType="instructor"
-                        itemName={instructor.user.name || 'Unnamed Instructor'}
-                      />
-                    </div>
                   </div>
-
-                  <div>
-                    <h5 className="text-sm font-medium mb-2">Assigned Lessons</h5>
-                    {instructor.lessons.length === 0 ? (
-                      <p className="text-sm text-gray-500">
-                        No lessons assigned yet.
-                      </p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {instructor.lessons.map((lesson) => (
-                          <li key={lesson.id} className="py-3 flex justify-between items-center">
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                {lesson.classLevel.name}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {days[lesson.dayOfWeek]} at {formatTime(lesson.startTime)} - {formatTime(lesson.endTime)}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {months[lesson.month - 1]} {lesson.year}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <EditLessonDialog
-                                organizationId={organizationId}
-                                classLevels={classLevels}
-                                instructors={instructors.map(i => ({
-                                  id: i.id,
-                                  user: {
-                                    name: i.user.name || 'Unnamed Instructor'
-                                  }
-                                }))}
-                                lesson={{
-                                  id: lesson.id,
-                                  classLevelId: lesson.classLevelId,
-                                  instructorId: instructor.id,
-                                  month: lesson.month,
-                                  year: lesson.year,
-                                  dayOfWeek: lesson.dayOfWeek,
-                                  startTime: lesson.startTime,
-                                  endTime: lesson.endTime //,
-                                  // color: lesson.color
-                                }}
-                              />
-                              <DeleteConfirmationDialog
-                                onDelete={() => handleDeleteLesson(lesson.id)}
-                                isDeleting={loading}
-                                itemType="lesson"
-                                itemName={instructor.user.name || 'Unnamed Instructor'}
-                              />
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
