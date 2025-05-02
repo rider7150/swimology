@@ -100,10 +100,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
   // Helper function to format time
   const formatTime = (time: string) => {
     if (!time) return '';
-    
-    
-    const date = new Date(time);
-    console.log('date', date);
+    console.log('time', time);
  
     try {
       // If time is already in HH:mm format
@@ -559,6 +556,9 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                               .map(([timeKey, lessonGroup]) => {
                                 console.log('timeKey', timeKey);
                                 const [startTime, endTime] = timeKey.split('-');
+                                console.log('startTime', startTime);
+                                console.log('endTime', endTime);
+
                                 return (
                                   <div key={timeKey} className="pl-4 border-l-2 border-gray-200">
                                     <h5 className="text-sm font-medium text-gray-600 mb-3">
