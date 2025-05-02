@@ -59,18 +59,19 @@ interface InstructorDashboardProps {
 }
 
 export function InstructorDashboard({ lessons: initialLessons }: InstructorDashboardProps) {
-//  console.log('Initial Lessons:', JSON.stringify(initialLessons, null, 2));
+  //console.log('Initial Lessons:', JSON.stringify(initialLessons, null, 2));
 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [updatingSkill, setUpdatingSkill] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>(() => {
-    // Format the initial lessons data when component mounts
+   // Format the initial lessons data when component mounts
     return initialLessons.map(lesson => ({
       ...lesson,
       startTime: lesson.startTime || '',
       endTime: lesson.endTime || ''
     }));
   });
+
   const [selectedEnrollment, setSelectedEnrollment] = useState<EnrollmentWithDetails | null>(null);
   const [nextLevelName, setNextLevelName] = useState<string>("");
   const [draftState, setDraftState] = useState<{
@@ -86,32 +87,41 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
   });
 
   
-  const [_, setForceUpdate] = useState(0);
+  //const [_, setForceUpdate] = useState(0);
 
-  useEffect(() => {
-    setForceUpdate(f => f + 1);
-  }, [lessons]);
+  //useEffect(() => {
+   // console.log('whats herelessons');
+   // setForceUpdate(f => f + 1);
+  //}, [lessons]);
 
   useEffect(() => {
     // Call refreshLessons on initial load
+    //console.log('refreshing lessons');
     refreshLessons();
 }, []); // Empty dependency array means this runs once on mount
 
   // Helper function to format time
   const formatTime = (time: string) => {
     if (!time) return '';
-    console.log('time', time);
+    //console.log('time', time);
  
     try {
-      // If time is already in HH:mm format
-      if (time.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)) {
-        console.log('time', time);
-        const [hours, minutes] = time.split(':').map(Number);
-        const date = new Date();
-        date.setHours(hours, minutes, 0, 0);
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit',timeZone: 'America/Los_Angeles' });
+      const date = new Date(time);
+      //console.log('date', date);   
+      
+      if (isNaN(date.getTime())) {
+        //console.log('Invalid date object');
+        return time;
       }
-      return ''; // Return empty string if format doesn't match
+      // Format in 12-hour time
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'America/Los_Angeles'  // Use Pacific time since that's what we're seeing
+      });
+
+ 
     } catch (error) {
       console.error('Error formatting time:', error);
       return ''; // Return empty string on error
@@ -156,6 +166,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
   }, {} as Record<string, Record<number, Record<string, Lesson[]>>>);
 
   const refreshLessons = async () => {
+   // console.log('refreshing lessons');
     try {
       const response = await fetch('/api/lessons');
       if (!response.ok) {
@@ -535,7 +546,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
           {Object.entries(groupedLessons)
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([monthKey, dayGroups]) => {
-
+              //console.log('monthKey', monthKey);
               const [year, month] = monthKey.split('-').map(Number);
               return (
                 <div key={monthKey} className="space-y-4">
@@ -554,10 +565,10 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                             {Object.entries(timeGroups)
                               .sort(([a], [b]) => a.localeCompare(b))
                               .map(([timeKey, lessonGroup]) => {
-                                console.log('timeKey', timeKey);
+                                //console.log('timeKey', timeKey);
                                 const [startTime, endTime] = timeKey.split('-');
-                                console.log('startTime', startTime);
-                                console.log('endTime', endTime);
+                                //console.log('startTime', startTime);
+                                //console.log('endTime', endTime);
 
                                 return (
                                   <div key={timeKey} className="pl-4 border-l-2 border-gray-200">

@@ -90,9 +90,12 @@ export async function GET() {
       // Transform the data to match the expected format
       const transformedLessons = lessons.map((lesson: any) => {
         // Format the time strings
-        const startTime = format(lesson.startTime, 'HH:mm');
-        const endTime = format(lesson.endTime, 'HH:mm');
-
+        //const startTime = format(lesson.startTime, 'HH:mm');
+        //const endTime = format(lesson.endTime, 'HH:mm');
+        const startTime = formatTime(lesson.startTime);
+        const endTime = formatTime(lesson.endTime) ;
+        console.log('startTime', startTime);
+        console.log('endTime', endTime);
         return {
           id: lesson.id,
           month: lesson.startDate.getMonth() + 1,
@@ -200,7 +203,8 @@ function formatTime(time: Date) {
   return time.toLocaleTimeString('en-US', { 
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true 
+    hour12: true ,
+    timeZone: 'America/Los_Angeles'
   });
 }
 
