@@ -104,7 +104,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
     try {
       // If time is already in HH:mm format
       if (time.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)) {
-
+        console.log('time', time);
         const [hours, minutes] = time.split(':').map(Number);
         const date = new Date();
         date.setHours(hours, minutes, 0, 0);
