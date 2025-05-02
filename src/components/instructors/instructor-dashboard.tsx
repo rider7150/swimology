@@ -101,6 +101,10 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
   const formatTime = (time: string) => {
     if (!time) return '';
     
+    
+    const date = new Date(time);
+    console.log('date', date);
+ 
     try {
       // If time is already in HH:mm format
       if (time.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)) {
@@ -553,6 +557,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                             {Object.entries(timeGroups)
                               .sort(([a], [b]) => a.localeCompare(b))
                               .map(([timeKey, lessonGroup]) => {
+                                console.log('timeKey', timeKey);
                                 const [startTime, endTime] = timeKey.split('-');
                                 return (
                                   <div key={timeKey} className="pl-4 border-l-2 border-gray-200">

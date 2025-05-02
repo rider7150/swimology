@@ -147,15 +147,16 @@ export function InstructorList({ organizationId, instructors, classLevels }: Ins
     }
     
     try {
-      //console.log('Raw time string:', timeString);
+      console.log('Raw time string:', timeString);
       
       // Convert the date string back to a Date object
       const date = new Date(timeString);
+      console.log('date', date);
+  
       if (isNaN(date.getTime())) {
         //console.log('Invalid date object');
         return timeString;
       }
-      
       // Format in 12-hour time
       return date.toLocaleTimeString('en-US', {
         hour: 'numeric',
