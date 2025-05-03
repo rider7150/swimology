@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, addMonths, startOfMonth } from "date-fns";
 
 interface Lesson {
   id: string;
@@ -41,10 +41,16 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [selectedInstructor, setSelectedInstructor] = useState<string>("");
+  const [filteredLessons, setFilteredLessons] = useState<Lesson[]>([]);
+  const [instructors, setInstructors] = useState<{ id: string; name: string }[]>([]);
+  const [selectedDay, setSelectedDay] = useState<string>("");
+  const [filteredByDayLessons, setFilteredByDayLessons] = useState<Lesson[]>([]);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<AddChildData>({
     resolver: zodResolver(addChildSchema),
@@ -58,15 +64,50 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
           throw new Error("Failed to fetch lessons");
         }
         const data = await response.json();
-        //console.log("Fetched lessons:", data);
-        setLessons(data);
+        // Only include lessons for this month or later
+        const now = new Date();
+        const thisMonth = startOfMonth(now);
+        const filtered = data.filter((lesson: Lesson) => new Date(lesson.startDate) >= thisMonth);
+        setLessons(filtered);
+        // Extract unique instructors
+        const uniqueInstructors = Array.from(
+          new Map(
+            filtered.map((lesson: Lesson) => [lesson.instructor.user.name, { id: lesson.instructor.user.name, name: lesson.instructor.user.name }])
+          ).values()
+        ) as { id: string; name: string }[];
+        setInstructors(uniqueInstructors);
       } catch (error) {
         //console.error("Error fetching lessons:", error);
       }
     }
-
     fetchLessons();
   }, []);
+
+  // When instructor changes, filter lessons
+  useEffect(() => {
+    if (selectedInstructor) {
+      setFilteredLessons(lessons.filter(l => l.instructor.user.name === selectedInstructor));
+      setValue("lessonId", ""); // Reset lesson selection
+      setSelectedDay("");
+      setFilteredByDayLessons([]);
+    } else {
+      setFilteredLessons([]);
+      setValue("lessonId", "");
+      setSelectedDay("");
+      setFilteredByDayLessons([]);
+    }
+  }, [selectedInstructor, lessons, setValue]);
+
+  // When day changes, filter lessons by day
+  useEffect(() => {
+    if (selectedDay) {
+      setFilteredByDayLessons(filteredLessons.filter(l => getDayName(l.dayOfWeek) === selectedDay));
+      setValue("lessonId", "");
+    } else {
+      setFilteredByDayLessons([]);
+      setValue("lessonId", "");
+    }
+  }, [selectedDay, filteredLessons, setValue]);
 
   const onSubmit = async (data: AddChildData) => {
     try {
@@ -172,33 +213,72 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
           </div>
         </div>
         <div>
-          <label htmlFor="lessonId" className="block text-sm font-medium text-gray-700">
-            Lesson
+          <label htmlFor="instructor" className="block text-sm font-medium text-gray-700">
+            Instructor
           </label>
           <div className="mt-1">
             <select
-              id="lessonId"
-              {...register("lessonId")}
+              id="instructor"
+              value={selectedInstructor}
+              onChange={e => setSelectedInstructor(e.target.value)}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm h-10"
             >
-              <option value="">Select a lesson</option>
-              {lessons.map((lesson) => {
-                const startMonth = format(new Date(lesson.startDate), 'MMMM');
-                const dayOfWeek = getDayName(lesson.dayOfWeek) + 's';
-                const startTime = formatTime(lesson.startTime);
-                const endTime = formatTime(lesson.endTime);
-                return (
-                  <option key={lesson.id} value={lesson.id}>
-                    {lesson.classLevel.name}, {startMonth}, {dayOfWeek}, {startTime} - {endTime}, with {lesson.instructor.user.name}
-                  </option>
-                );
-              })}
+              <option value="">Select an instructor</option>
+              {instructors.map(inst => (
+                <option key={inst.id} value={inst.name}>{inst.name}</option>
+              ))}
             </select>
-            {errors.lessonId && (
-              <p className="mt-1 text-sm text-red-600">{errors.lessonId.message}</p>
-            )}
           </div>
         </div>
+        {selectedInstructor && (
+          <div>
+            <label htmlFor="dayOfWeek" className="block text-sm font-medium text-gray-700">
+              Day of the Week
+            </label>
+            <div className="mt-1">
+              <select
+                id="dayOfWeek"
+                value={selectedDay}
+                onChange={e => setSelectedDay(e.target.value)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm h-10"
+              >
+                <option value="">Select a day</option>
+                {[...new Set(filteredLessons.map(l => getDayName(l.dayOfWeek)))].map(day => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+        {selectedInstructor && selectedDay && (
+          <div>
+            <label htmlFor="lessonId" className="block text-sm font-medium text-gray-700">
+              Lesson
+            </label>
+            <div className="mt-1">
+              <select
+                id="lessonId"
+                {...register("lessonId")}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm h-10"
+              >
+                <option value="">Select a lesson</option>
+                {filteredByDayLessons.map((lesson) => {
+                  const startMonth = format(new Date(lesson.startDate), 'MMMM');
+                  const startTime = formatTime(lesson.startTime);
+                  const endTime = formatTime(lesson.endTime);
+                  return (
+                    <option key={lesson.id} value={lesson.id}>
+                      {lesson.classLevel.name}, {startMonth}, {startTime} - {endTime}
+                    </option>
+                  );
+                })}
+              </select>
+              {errors.lessonId && (
+                <p className="mt-1 text-sm text-red-600">{errors.lessonId.message}</p>
+              )}
+            </div>
+          </div>
+        )}
         <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
           <button
             type="submit"

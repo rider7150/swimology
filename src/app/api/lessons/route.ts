@@ -94,8 +94,8 @@ export async function GET() {
         //const endTime = format(lesson.endTime, 'HH:mm');
         const startTime = formatTime(lesson.startTime);
         const endTime = formatTime(lesson.endTime) ;
-        console.log('startTime', startTime);
-        console.log('endTime', endTime);
+        // console.log('startTime', startTime);
+        // console.log('endTime', endTime);
         return {
           id: lesson.id,
           month: lesson.startDate.getMonth() + 1,
