@@ -10,7 +10,7 @@ export function Header() {
   const { data: session } = useSession();
 
   return (
-    <header className="bg-white border-b border-swimly-text-light/10 shadow-soft">
+    <header className="bg-grey-200 border-b border-swimly-text-light/10 shadow-soft">
       <div className="container mx-auto px-4 py-4 max-w-7xl">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
@@ -23,21 +23,6 @@ export function Header() {
           {session?.user && (
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-3">
-                {session.user.image ? (
-                  <div className="ring-2 ring-blue-600/20 rounded-full p-0.5">
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name || "Profile"}
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
-                  </div>
-                ) : (
-                  <div className="ring-2 ring-blue-600/20 rounded-full p-2">
-                    <UserCircleIcon className="h-6 w-6 text-blue-600" />
-                  </div>
-                )}
                 <span className="text-sm font-medium text-gray-900">
                   {session.user.name}
                 </span>

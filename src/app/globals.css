@@ -10,15 +10,15 @@
 
 @layer base {
   body {
-    @apply bg-white text-gray-900;
+    @apply bg-sky-400 text-slate-900;
   }
 
   h1 {
-    @apply text-3xl font-bold text-gray-900 mb-4;
+    @apply text-3xl font-bold text-slate-900 mb-4;
   }
 
   h2 {
-    @apply text-2xl font-semibold text-gray-900 mb-3;
+    @apply text-2xl font-semibold text-slate-900 mb-3;
   }
 
   h3 {

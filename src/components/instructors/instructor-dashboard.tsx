@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
 import { CheckCircle, Clock, MoreHorizontal, GraduationCap } from "lucide-react";
@@ -31,7 +30,7 @@ interface Student {
   strengthNotes?: string;
   improvementNotes?: string;
   readyForNextLevel: boolean;
-  birthDate?: string;
+  birthDate: string;
 }
 
 interface Lesson {
@@ -86,6 +85,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
     readyForNextLevel: false
   });
 
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   
   //const [_, setForceUpdate] = useState(0);
 
@@ -378,58 +378,66 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
 
   return (
     <div className="space-y-6">
-      {selectedStudent ? (
+      {
+      selectedStudent ? ( 
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => {
-                  setSelectedStudent(null);
-                  refreshLessons();
-                }}
-                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+          <button
+            onClick={() => {
+              setSelectedStudent(null);
+              refreshLessons();
+            }}
+            className="rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white shadow-sm"
+          >
+            Back to Lessons
+          </button>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-2 rounded-lg border bg-slate-400 p-4 shadow-sm">
+            {selectedLesson && (
+              console.log('selectedLesson', selectedLesson),
+
+                      <div className="mt-2 text-xs text-gray-900 font-normal">
+                      {getMonthName(selectedLesson.month)} {selectedLesson.year} • {getDayName(selectedLesson.dayOfWeek)}s • {selectedLesson.startTime} - {selectedLesson.endTime}
+                      </div>
+                    )}
+              <span 
+                className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white w-fit"
+                style={{ backgroundColor: selectedStudent.classLevel.color || "#3B82F6" }}
               >
-                &lt;
-              </button>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {selectedStudent.name}
-                  <span 
-                    className="ml-2 inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
+                {selectedStudent.classLevel.name}
+              </span>
+              {selectedStudent.name}
+              {nextLevelName && (
+                <div className="flex items-center text-sm text-gray-900">
+                <span className="mr-1">Ready for</span>
+              
+                <div className="flex items-center space-x-1">
+                  <span
+                    className="inline-flex items-center rounded-full px-3 py-1 font-medium text-white"
                     style={{ backgroundColor: selectedStudent.classLevel.color || "#3B82F6" }}
                   >
-                    {selectedStudent.classLevel.name}
+                    {nextLevelName}
                   </span>
-                </h2>
+              
+                  <Switch
+                    id="ready-toggle"
+                    checked={draftState.readyForNextLevel}
+                    onCheckedChange={handleReadyToggle}
+                    className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-200"
+                  />
+                </div>
               </div>
-            </div>
-            {nextLevelName && (
-              <div className="flex items-center gap-4 bg-gray-100 px-4 py-2 rounded-lg">
-                <label htmlFor="ready-toggle" className="text-sm font-medium text-gray-900">
-                  Ready for {nextLevelName}
-                </label>
-                <Switch
-                  id="ready-toggle"
-                  checked={draftState.readyForNextLevel}
-                  onCheckedChange={handleReadyToggle}
-                  className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-200"
+              )}
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                  style={{ width: `${(selectedStudent.skills.filter((s) => draftState.skills[s.id] === "COMPLETED").length / selectedStudent.skills.length) * 100}%` }}
                 />
               </div>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                style={{ width: `${(selectedStudent.skills.filter((s) => draftState.skills[s.id] === "COMPLETED").length / selectedStudent.skills.length) * 100}%` }}
-              />
+              <div className="text-xs text-gray-900 text-right">
+                {selectedStudent.skills.filter((s) => draftState.skills[s.id] === "COMPLETED").length} of {selectedStudent.skills.length} skills completed
+              </div>
             </div>
-            <div className="text-xs text-gray-500 text-right">
-              {selectedStudent.skills.filter((s) => draftState.skills[s.id] === "COMPLETED").length} of {selectedStudent.skills.length} skills completed
-            </div>
-          </div>
-
+          </div>          
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {selectedStudent.skills.map((skill) => (
               <div
@@ -567,11 +575,9 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                               .map(([timeKey, lessonGroup]) => {
                                 //console.log('timeKey', timeKey);
                                 const [startTime, endTime] = timeKey.split('-');
-                                //console.log('startTime', startTime);
-                                //console.log('endTime', endTime);
 
                                 return (
-                                  <div key={timeKey} className="pl-4 border-l-2 border-gray-200">
+                                  <div key={timeKey} className="pl-0">
                                     <h5 className="text-sm font-medium text-gray-600 mb-3">
                                       {formatTime(startTime)} - {formatTime(endTime)}
                                     </h5>
@@ -579,6 +585,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                                       {lessonGroup.flatMap(lesson =>
                                         lesson.students.map(student => {
                                           let age = null;
+                                          console.log('student', student);
                                           if (student.birthDate) {
                                             age = differenceInYears(new Date(), new Date(student.birthDate));
                                           }
@@ -587,6 +594,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                                             key={`${lesson.id}-${student.id}`}
                                             onClick={() => {
                                               setSelectedStudent(student);
+                                              setSelectedLesson(lesson);
                                               setSelectedEnrollment({
                                                 id: student.enrollmentId,
                                                 readyForNextLevel: student.readyForNextLevel,
@@ -630,6 +638,11 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                                                   {student.skills.filter(s => s.status === "COMPLETED").length} of {student.skills.length} skills completed
                                                 </div>
                                               </div>
+                                              {selectedLesson && (
+                                                <div className="text-sm text-gray-700 mt-2">
+                                                  {getMonthName(selectedLesson.month)} {selectedLesson.year} • {getDayName(selectedLesson.dayOfWeek)}s • {formatTime(selectedLesson.startTime)} - {formatTime(selectedLesson.endTime)}
+                                                </div>
+                                              )}
                                             </div>
                                           </button>
                                           );

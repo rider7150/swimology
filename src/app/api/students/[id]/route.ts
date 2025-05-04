@@ -151,6 +151,7 @@ export async function GET(
         sortOrder: enrollment.lesson.classLevel.sortOrder,
       },
       readyForNextLevel: enrollment.readyForNextLevel,
+      birthDate: child.birthDate,
       skills: skills.map((skill: Skill) => {
         const progress = enrollment.progress.find((p: Progress) => p.skillId === skill.id);
         return {

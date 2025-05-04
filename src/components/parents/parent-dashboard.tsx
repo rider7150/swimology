@@ -222,6 +222,11 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
 
   if (selectedChild && selectedLesson) {
     const currentLesson = selectedLesson;
+
+    let age = null;
+    if (selectedChild.birthDate) {
+      age = differenceInYears(new Date(), new Date(selectedChild.birthDate));
+    }
     if (!currentLesson) {
       return (
         <div className="space-y-6">
@@ -233,13 +238,16 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
                   setSelectedLesson(null);
                   refreshChildren();
                 }}
-                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
               >
                 Back to Children
               </button>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <span className="text-xl font-semibold text-gray-900">
                 {selectedChild.name}
-              </h2>
+                {age !== null && (
+                  <span className="ml-2 text-gray-500 text-base">({age})</span>
+                )}
+              </span>
             </div>
           </div>
           <p className="text-gray-500">Your child isn&apos;t enrolled in any lessons yet.</p>
@@ -257,54 +265,50 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
             setSelectedLesson(null);
             refreshChildren();
           }}
-          className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
         >
           Back to Children
         </button>
 
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {selectedChild.name}
-            </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-2 rounded-lg border bg-slate-400 p-4 shadow-sm">
             {currentLesson && (
-              <div className="flex items-center justify-between mt-1">
-                <span
-                  className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
-                  style={{ backgroundColor: currentLesson.classLevel?.color || '#3b82f6' }}
-                >
-                  {currentLesson.classLevel?.name || currentLesson.name}
-                </span>
-                {currentLesson.readyForNextLevel && (
-                  <GraduationCap className="h-6 w-6 text-green-600 ml-2" />
-                )}
+              <div className="space-y-1">
+                <p className="text-sm text-gray-900">
+                  {format(new Date(currentLesson.startDate), 'MMMM yyyy')} • {getDayName(currentLesson.dayOfWeek)}s • {formatTime(currentLesson.startTime)} - {formatTime(currentLesson.endTime)}
+                </p>
               </div>
             )}
-          </div>
-          {currentLesson && (
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">
-                {/* new Date(currentLesson.startTime).toLocaleString('default', { month: 'long' })} {new Date(currentLesson.startTime).getFullYear()} */}
-               </p>
-              <p className="text-sm text-gray-500">
-                {getDayName(currentLesson.dayOfWeek)}s, {formatTime(currentLesson.startTime)} - {formatTime(currentLesson.endTime)}
-              </p>
-            </div>
-          )}
-        </div>
+            <span
+              className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white w-fit"
+              style={{ backgroundColor: currentLesson.classLevel?.color || '#3b82f6' }}
+            >
+              {currentLesson.classLevel?.name || currentLesson.name}
+            </span>
 
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-500">
-            {completedSkills} of {currentLesson.skills?.length || 0} skills completed
-          </div>
-          {nextLevelName && currentLesson.readyForNextLevel && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">
-                Ready for {nextLevelName}
-              </span>
-              <div className="h-4 w-4 rounded-full border bg-green-500 border-green-600" />
+            <h2 className="text-xl font-semibold text-gray-900">
+              {selectedChild.name} {
+                  age !== null && (
+                <span className="ml-2 text-gray-700 text-xl">({age})</span>
+              )}
+            </h2>
+            <p className="text-sm text-gray-900">
+              {completedSkills} of {currentLesson.skills?.length || 0} skills completed
+            </p>
+            {nextLevelName && currentLesson.readyForNextLevel && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-900">
+                 Ready for  &nbsp;
+                  <span
+                    className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white w-fit"
+                    style={{ backgroundColor: currentLesson.classLevel?.color || '#3b82f6' }}
+                  >
+                    {nextLevelName}
+                  </span>
+                </span>
             </div>
           )}
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -386,7 +390,7 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
   }
 
   return (
-    <div className="p-8">
+    <div className="space-y-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">My Children</h1>
         <button
@@ -420,64 +424,71 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
               return (
                 <div
                   key={`${child.id}-${currentLesson.enrollmentId}`}
-                  className="relative bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow flex flex-col h-full justify-between mb-0 w-[350px] cursor-pointer"
-                  onClick={e => {
+                  className="relative bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow flex flex-col h-full justify-between mb-0 cursor-pointer"
+                 onClick={e => {
                     if ((e.target as HTMLElement).closest('button')) return;
                     setSelectedChild(child);
                     setSelectedLesson(currentLesson);
                   }}
                 >
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        openNextLessonModal(child, currentLesson);
-                      }}
-                      className="text-indigo-300 hover:text-blue-700"
-                      title="Select Next Lesson"
-                    >
-                      <ArrowRightCircle className="h-5 w-5" />
-                    </button>
-                    <DeleteConfirmationDialog
-                      onDelete={async () => {
-                        setIsDeleting(true);
-                        try {
-                          const res = await fetch(`/api/enrollments/${currentLesson.enrollmentId}`, { method: 'DELETE' });
-                          if (!res.ok) throw new Error('Failed to delete enrollment');
-                          if (child.lessons.length === 1) {
-                            await fetch(`/api/children/${child.id}`, { method: 'DELETE' });
-                          }
-                          refreshChildren();
-                        } catch (error) {
-                          alert(error instanceof Error ? error.message : 'Failed to delete enrollment');
-                        } finally {
-                          setIsDeleting(false);
-                        }
-                      }}
-                      isDeleting={isDeleting && deletingChildId === child.id}
-                      itemType="lesson"
-                      itemName={currentLesson.classLevel?.name || currentLesson.name}
-                    />
-                  </div>
                   <div>
+                    {currentLesson && (
+                      <div className="mt-2 text-xs text-gray-500 font-normal">
+                      { format(new Date(currentLesson.startDate), 'MMMM yyyy')} • {format(new Date(currentLesson.startTime), 'EEEE')}s • {format(new Date(currentLesson.startTime), 'h:mm')} - {format(new Date(currentLesson.endTime), 'h:mm a')}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mt-1">
+                      <span
+                        className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
+                        style={{ backgroundColor: currentLesson.classLevel?.color || '#3b82f6' }}
+                      >
+                        {currentLesson.classLevel?.name || currentLesson.name}
+                      </span>
+                      {/* Right-aligned actions container */}
+                      <div className="flex items-center space-x-2 ml-auto">
+                        <button
+                          onClick={e => {
+                           e.stopPropagation();
+                            openNextLessonModal(child, currentLesson);
+                          }}
+                          className="text-indigo-300 hover:text-blue-700"
+                          title="Select Next Lesson"
+                        >
+                          <ArrowRightCircle className="h-5 w-5" />
+                        </button>
+                        <DeleteConfirmationDialog
+                          onDelete={async () => {
+                            setIsDeleting(true);
+                            try {
+                              const res = await fetch(`/api/enrollments/${currentLesson.enrollmentId}`, { method: 'DELETE' });
+                              if (!res.ok) throw new Error('Failed to delete enrollment');
+                              if (child.lessons.length === 1) {
+                                await fetch(`/api/children/${child.id}`, { method: 'DELETE' });
+                              }
+                              refreshChildren();
+                            } catch (error) {
+                                alert(error instanceof Error ? error.message : 'Failed to delete enrollment');
+                            } finally {
+                                setIsDeleting(false);
+                            }
+                          }}
+                          isDeleting={isDeleting && deletingChildId === child.id}
+                          itemType="lesson"
+                          itemName={currentLesson.classLevel?.name || currentLesson.name}
+                        />
+                      </div>
+                    </div>
+
                     <div className="mb-2">
-                      <h2 className="text-xl font-semibold flex items-center">
+                      <span className="text-xl font-semibold flex items-center">
                         {child.name}
                         {age !== null && (
                           <span className="ml-2 text-gray-500 text-base">({age})</span>
                         )}
-                      </h2>
-                      <div className="flex items-center justify-between mt-1">
-                        <span
-                          className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
-                          style={{ backgroundColor: currentLesson.classLevel?.color || '#3b82f6' }}
-                        >
-                          {currentLesson.classLevel?.name || currentLesson.name}
-                        </span>
                         {currentLesson.readyForNextLevel && (
                           <GraduationCap className="h-6 w-6 text-green-600 ml-2" />
-                        )}
-                      </div>
+                        )}               
+                      </span>  
                     </div>
                     {!currentLesson ? (
                       <p className="text-gray-500">Not enrolled in any lessons yet.</p>
@@ -495,11 +506,7 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
                       </div>
                     )}
                   </div>
-                  {currentLesson && (
-                    <div className="mt-2 text-xs text-gray-500 font-normal">
-                      { format(new Date(currentLesson.startDate), 'MMMM yyyy')} • {format(new Date(currentLesson.startTime), 'EEEE')}s • {format(new Date(currentLesson.startTime), 'h:mm')} - {format(new Date(currentLesson.endTime), 'h:mm a')}
-                    </div>
-                  )}
+
                 </div>
               );
             })}
