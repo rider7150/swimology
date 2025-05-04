@@ -391,7 +391,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
             Back to Lessons
           </button>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="flex flex-col gap-2 rounded-lg border bg-slate-400 p-4 shadow-sm">
+            <div className="flex flex-col gap-2 rounded-2xl border bg-white p-4 shadow-lg bg-gradient-to-br from-indigo-50 to-blue-100">
             {selectedLesson && (
               console.log('selectedLesson', selectedLesson),
 
@@ -412,7 +412,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
               
                 <div className="flex items-center space-x-1">
                   <span
-                    className="inline-flex items-center rounded-full px-3 py-1 font-medium text-white"
+                  className="inline-flex items-center rounded-full px-3 py-1 text-white text-sm font-semibold shadow-sm"
                     style={{ backgroundColor: selectedStudent.classLevel.color || "#3B82F6" }}
                   >
                     {nextLevelName}
@@ -442,7 +442,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
             {selectedStudent.skills.map((skill) => (
               <div
                 key={skill.id}
-                className="relative rounded-lg border border-gray-300 bg-white p-4 shadow-sm"
+                className="rounded-2xl bg-white p-4 shadow-md transition-transform hover:scale-105 hover:shadow-xl"
               >
                 <div className="space-y-2">
                   <h3 className="text-lg font-medium text-gray-900">
@@ -469,9 +469,8 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                     ))}
                   </div>
                   <div className="mt-4">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Instructor Notes</label>
                     <textarea
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      className="mt-2 w-full rounded-md border border-gray-300 p-2 text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-400"
                       rows={2}
                       placeholder="Add notes for this skill..."
                       value={draftState.skillNotes[skill.id] || ""}
@@ -499,7 +498,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                     <textarea
                       id="strength-notes"
                       rows={3}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm bg-green-50 text-gray-900"
+                      className="mt-2 w-full rounded-md border border-gray-300 p-2 text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-400"
                       placeholder="Add notes about strengths..."
                       value={draftState.notes.strength}
                       onChange={(e) => setDraftState(prev => ({
@@ -517,7 +516,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                     <textarea
                       id="improvement-notes"
                       rows={3}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-blue-50 text-gray-900"
+                      className="mt-2 w-full rounded-md border border-gray-300 p-2 text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-400"
                       placeholder="Add notes about areas for improvement..."
                       value={draftState.notes.improvement}
                       onChange={(e) => setDraftState(prev => ({
@@ -605,7 +604,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                                             }}
                                             className="block text-left w-full"
                                           >
-                                              <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow relative">
+                                              <div className="rounded-2xl bg-white p-4 shadow-md transition-transform hover:scale-105 hover:shadow-xl">
                                                 <div className="flex items-center justify-between mb-2">
                                                   <div className="flex items-center">
                                                     <h2 className="text-xl font-semibold">

@@ -271,7 +271,7 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
         </button>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="flex flex-col gap-2 rounded-lg border bg-slate-400 p-4 shadow-sm">
+          <div className="flex flex-col gap-2 rounded-2xl border bg-slate-400 p-4 shadow-sm">
             {currentLesson && (
               <div className="space-y-1">
                 <p className="text-sm text-gray-900">
@@ -315,7 +315,7 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
           {currentLesson.skills?.map((skill) => (
             <div
               key={skill.id}
-              className="relative rounded-lg border border-gray-300 bg-white p-4 shadow-sm"
+              className="rounded-2xl bg-white p-4 shadow-md transition-transform hover:scale-105 hover:shadow-xl"
             >
               <div className="space-y-2">
                 <h3 className="text-lg font-medium text-gray-900">
@@ -424,7 +424,7 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
               return (
                 <div
                   key={`${child.id}-${currentLesson.enrollmentId}`}
-                  className="relative bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow flex flex-col h-full justify-between mb-0 cursor-pointer"
+                  className="rounded-2xl bg-white p-4 shadow-md transition-transform hover:scale-105 hover:shadow-xl"
                  onClick={e => {
                     if ((e.target as HTMLElement).closest('button')) return;
                     setSelectedChild(child);
@@ -439,7 +439,7 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
                     )}
                     <div className="flex items-center justify-between mt-1">
                       <span
-                        className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
+                        className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white shadow-sm"
                         style={{ backgroundColor: currentLesson.classLevel?.color || '#3b82f6' }}
                       >
                         {currentLesson.classLevel?.name || currentLesson.name}

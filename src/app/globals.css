@@ -10,7 +10,7 @@
 
 @layer base {
   body {
-    @apply bg-sky-400 text-slate-900;
+    @apply bg-gradient-to-b from-sky-100 to-sky-200 min-h-screen;
   }
 
   h1 {
