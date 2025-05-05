@@ -390,10 +390,14 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
           >
             Back to Lessons
           </button>
+
+
+
+          
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="flex flex-col gap-2 rounded-2xl border bg-white p-4 shadow-lg bg-gradient-to-br from-indigo-50 to-blue-100">
             {selectedLesson && (
-              console.log('selectedLesson', selectedLesson),
+              // console.log('selectedLesson', selectedLesson),
 
                       <div className="mt-2 text-xs text-gray-900 font-normal">
                       {getMonthName(selectedLesson.month)} {selectedLesson.year} • {getDayName(selectedLesson.dayOfWeek)}s • {selectedLesson.startTime} - {selectedLesson.endTime}
@@ -498,7 +502,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                     <textarea
                       id="strength-notes"
                       rows={3}
-                      className="mt-2 w-full rounded-md border border-gray-300 p-2 text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm bg-green-50 text-gray-900"
                       placeholder="Add notes about strengths..."
                       value={draftState.notes.strength}
                       onChange={(e) => setDraftState(prev => ({
@@ -516,7 +520,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                     <textarea
                       id="improvement-notes"
                       rows={3}
-                      className="mt-2 w-full rounded-md border border-gray-300 p-2 text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-blue-50 text-gray-900"
                       placeholder="Add notes about areas for improvement..."
                       value={draftState.notes.improvement}
                       onChange={(e) => setDraftState(prev => ({
@@ -584,7 +588,7 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                                       {lessonGroup.flatMap(lesson =>
                                         lesson.students.map(student => {
                                           let age = null;
-                                          console.log('student', student);
+                                          // console.log('student', student);
                                           if (student.birthDate) {
                                             age = differenceInYears(new Date(), new Date(student.birthDate));
                                           }

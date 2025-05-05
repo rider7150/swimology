@@ -46,11 +46,17 @@ interface SortableRowProps {
   level: ClassLevel;
   organizationId: string;
   onSuccess: () => void;
+  index: number;
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-function SortableRow({ level, organizationId, onSuccess }: SortableRowProps) {
+function SortableRow({
+  level,
+  organizationId,
+  onSuccess,
+  index,
+}: SortableRowProps) {
   const {
     attributes,
     listeners,
@@ -60,30 +66,43 @@ function SortableRow({ level, organizationId, onSuccess }: SortableRowProps) {
     isDragging,
   } = useSortable({ id: level.id });
 
+  const background = isDragging
+    ? "bg-white"
+    : index % 2 === 0
+    ? "bg-white"
+    : "bg-gray-50";
+  const dragAccent = isDragging ? "border-l-4 border-indigo-600" : "";
+  const rowClasses = `${background} ${dragAccent} hover:bg-indigo-50 transition-colors`;
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
-    <tr ref={setNodeRef} style={style} className={isDragging ? "bg-gray-50" : ""}>
-      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-        <div className="flex items-center gap-2">
-          <button
-            className="cursor-move touch-none"
-            {...attributes}
-            {...listeners}
-          >
+    <tr ref={setNodeRef} style={style} className={rowClasses}>
+      {/* Name */}
+        <td className="whitespace-nowrap overflow-hidden py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+        <div className="flex items-center gap-0 overflow-hidden">
+          <button className="flex-shrink-0 cursor-move touch-none" {...attributes} {...listeners}>
             <GripVertical className="h-4 w-4 text-gray-400" />
           </button>
-          {level.name}
+          <span
+            className="truncate"
+            title={level.name}
+          >
+            {level.name}
+          </span>
         </div>
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+
+      {/* Description */}
+      <td className="hidden sm:table-cell whitespace-nowrap px-3 py-3 text-sm text-gray-500">
         {level.description}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+
+      {/* Color */}
+      <td className="hidden md:table-cell whitespace-nowrap px-3 py-3 text-sm text-gray-500">
         <div className="flex items-center">
           <div
             className="w-6 h-6 rounded-md border"
@@ -92,26 +111,29 @@ function SortableRow({ level, organizationId, onSuccess }: SortableRowProps) {
           />
         </div>
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+
+      {/* Capacity */}
+      <td className="hidden lg:table-cell whitespace-nowrap px-3 py-3 text-sm text-gray-500">
         <div className="flex items-center gap-1">
           <Users className="h-4 w-4" />
           {level.capacity}
         </div>
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+
+      {/* Sort order */}
+      <td className="hidden lg:table-cell whitespace-nowrap px-3 py-3 text-sm text-gray-500">
         {level.sortOrder}
       </td>
-      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+
+      {/* Actions */}
+      <td className="relative whitespace-nowrap py-3 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
         <div className="flex justify-end gap-2">
           <ClassLevelDialog
             organizationId={organizationId}
             editingLevel={level}
             onSuccess={onSuccess}
           />
-          <Link
-            href={`/organizations/${organizationId}/class-levels/${level.id}/skills`}
-            
-          >
+          <Link href={`/organizations/${organizationId}/class-levels/${level.id}/skills`}>
             <Button variant="ghost" size="icon" className="text-indigo-300 hover:text-indigo-600">
               <ClipboardDocumentListIcon className="h-5 w-5" />
               <span className="sr-only">Manage Skills</span>
@@ -134,10 +156,7 @@ export function ClassLevelsTable({ organizationId }: ClassLevelsTableProps) {
   const { data: classLevels, mutate } = useSWR<ClassLevel[]>(
     `/api/organizations/${organizationId}/class-levels`,
     fetcher,
-    {
-      refreshInterval: 0,
-      revalidateOnFocus: false,
-    }
+    { refreshInterval: 0, revalidateOnFocus: false }
   );
 
   const sensors = useSensors(
@@ -154,143 +173,120 @@ export function ClassLevelsTable({ organizationId }: ClassLevelsTableProps) {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
-    if (!over || active.id === over.id || !classLevels) {
-      return;
-    }
+    if (!over || active.id === over.id || !classLevels) return;
 
-    const oldIndex = classLevels.findIndex((level) => level.id === active.id);
-    const newIndex = classLevels.findIndex((level) => level.id === over.id);
-    
-    if (oldIndex === -1 || newIndex === -1) {
-      return;
-    }
+    const oldIndex = classLevels.findIndex((l) => l.id === active.id);
+    const newIndex = classLevels.findIndex((l) => l.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
 
-    const updatedLevels = arrayMove(classLevels, oldIndex, newIndex).map(
-      (level, index) => ({
-        ...level,
-        sortOrder: index,
-      })
-    );
-
-    // Optimistically update the UI
-    mutate(updatedLevels, false);
+    const updated = arrayMove(classLevels, oldIndex, newIndex).map((lvl, i) => ({
+      ...lvl,
+      sortOrder: i,
+    }));
+    mutate(updated, false);
 
     try {
-      const response = await fetch(
+      const res = await fetch(
         `/api/organizations/${organizationId}/class-levels/reorder`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            levels: updatedLevels.map((level) => ({
-              id: level.id,
-              sortOrder: level.sortOrder,
-            })),
+            levels: updated.map((lvl) => ({ id: lvl.id, sortOrder: lvl.sortOrder })),
           }),
         }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to reorder class levels");
-      }
-
+      if (!res.ok) throw new Error();
       toast.success("Class levels reordered successfully");
-      mutate(); // Refresh the data to ensure it's in sync
-    } catch (error) {
+      mutate();
+    } catch {
       toast.error("Failed to reorder class levels");
-      mutate(); // Revert to the server state
+      mutate();
     }
   };
 
-  if (!classLevels) {
-    return <div>Loading...</div>;
-  }
+  if (!classLevels) return <div>Loading...</div>;
 
   return (
-    <div>
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h2 className="text-xl font-semibold text-gray-900">Class Levels</h2>
-          <p className="mt-2 text-sm text-gray-700">
-            A list of all class levels in your organization. Drag to reorder.
-          </p>
-        </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-          <ClassLevelDialog 
-            organizationId={organizationId} 
-            onSuccess={handleSuccess}
-          />
-        </div>
-      </div>
-      <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <table className="min-w-full divide-y divide-gray-300">
-              <thead>
+    <div className="space-y-6">
+          <div className="flex justify-end space-x-4">
+      <ClassLevelDialog
+        organizationId={organizationId}
+        onSuccess={handleSuccess}
+      />
+    </div>
+          {/* DRAG & DROP CONTEXTS */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={classLevels.map((lvl) => lvl.id)}
+          strategy={verticalListSortingStrategy}
+        >
+      <div className="mt-8">
+        {/* Card wrapper */}
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="px-4 py-5 sm:p-6">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
                   <th
                     scope="col"
-                    className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:pr-0"
                   >
                     Name
                   </th>
                   <th
                     scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Description
                   </th>
                   <th
                     scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Color
                   </th>
                   <th
                     scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Class Size
                   </th>
                   <th
                     scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Display Order
                   </th>
-                  <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
-                    <span className="sr-only">Actions</span>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:pr-0"
+                  >
+                    Actions
                   </th>
                 </tr>
               </thead>
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={classLevels.map((level) => level.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                  <tbody className="divide-y divide-gray-200">
-                    {classLevels.map((level) => (
-                      <SortableRow
-                        key={level.id}
-                        level={level}
-                        organizationId={organizationId}
-                        onSuccess={handleSuccess}
-                      />
-                    ))}
-                  </tbody>
-                  </SortableContext>
-                </DndContext>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {classLevels.map((level, idx) => (
+                  <SortableRow
+                    key={level.id}
+                    level={level}
+                    organizationId={organizationId}
+                    onSuccess={handleSuccess}
+                    index={idx}
+                  />
+                ))}
+              </tbody>
             </table>
           </div>
         </div>
       </div>
+      </SortableContext>
+      </DndContext>
     </div>
   );
-} 
+}

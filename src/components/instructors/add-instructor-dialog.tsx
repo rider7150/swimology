@@ -24,20 +24,25 @@ export function AddInstructorDialog({ organizationId }: AddInstructorDialogProps
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50" />
         <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-          <div className="flex justify-between items-center mb-4">
+          
+          {/* Header with Title + Description */}
+          <div className="flex flex-col mb-4">
             <Dialog.Title className="text-lg font-semibold">
               Add New Instructor
             </Dialog.Title>
+            <Dialog.Description className="mt-1 text-sm text-gray-500">
+              Enter the instructor’s name, email, and phone number, then click Save to add them to your organization.
+            </Dialog.Description>
           </div>
+
+          {/* Form body */}
           <InstructorForm
             organizationId={organizationId}
-            onSuccess={() => {
-              setOpen(false);
-            }}
+            onSuccess={() => setOpen(false)}
             onCancel={() => setOpen(false)}
           />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
   );
-} 
+}

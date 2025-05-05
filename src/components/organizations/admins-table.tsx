@@ -79,8 +79,7 @@ export function AdminsTable({ organizationId }: AdminsTableProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Organization Admins</h2>
+      <div className="flex justify-end space-x-4">
         <AddAdminDialog organizationId={organizationId} onAdminAdded={fetchAdmins} />
       </div>
 

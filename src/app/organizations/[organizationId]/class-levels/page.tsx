@@ -59,8 +59,8 @@ export default async function ClassLevelsPage({ params }: PageProps) {
     <div className="space-y-6">
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Manage Class Levels</h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Manage Class Levels</h2>
+          <p className="text-gray-600">
             Add and manage class levels for {organization.name}
           </p>
         </div>

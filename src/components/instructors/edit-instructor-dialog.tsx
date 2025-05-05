@@ -32,12 +32,18 @@ export function EditInstructorDialog({ organizationId, instructor }: EditInstruc
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50" />
         <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg w-full max-w-md">
-          <div className="flex justify-between items-center p-6 border-b">
+          
+          {/* Header with Title + Description */}
+          <div className="flex flex-col p-6 border-b">
             <Dialog.Title className="text-lg font-semibold">
               Edit Instructor
             </Dialog.Title>
-
+            <Dialog.Description className="mt-1 text-sm text-gray-500">
+              Update the instructor’s name, email, or phone number and click Save when you’re done.
+            </Dialog.Description>
           </div>
+
+          {/* Form body */}
           <div className="p-6">
             <InstructorForm
               organizationId={organizationId}
@@ -46,8 +52,9 @@ export function EditInstructorDialog({ organizationId, instructor }: EditInstruc
               onCancel={() => setOpen(false)}
             />
           </div>
+
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
   );
-} 
+}

@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { SkillDialog } from "@/components/skills/skill-dialog";
 import { Toaster } from "sonner";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 interface Skill {
   id: string;
@@ -44,66 +46,77 @@ export default async function SkillsPage({ params }: SkillsPageProps) {
   return (
     <>
       <Toaster />
-      <main className="py-10">
-        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-          <div className="px-4 sm:px-0">
-            <div className="sm:flex sm:items-center">
-              <div className="sm:flex-auto">
-                <h1 className="text-xl font-semibold text-gray-900">
+      <div className="space-y-6">
+        <div className="space-y-6">
+          <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   Skills for {classLevel.name}
-                </h1>
-                <p className="mt-2 text-sm text-gray-700">
+                </h2>
+                <p className="text-gray-600">
                   Manage skills that students need to master in this level
                 </p>
-              </div>
+                </div>
+            <div className="mb-4">
+              <Link
+                href={`/organizations/${organizationId}/class-levels`}
+                className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-800"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Back to Classes
+              </Link>
             </div>
-
-            <div className="mt-8">
-                <div className="overflow-hidden bg-white shadow sm:rounded-lg">
-                  <div className="px-4 py-5 sm:p-6">
-                  <div className="flex justify-end mb-4">
+            <div className="flex justify-end mb-4">
                     <SkillDialog
                       organizationId={organizationId}
                       levelId={levelId}
                     />
                   </div>
-                    <div className="mt-4">
-                      {classLevel.skills.length === 0 ? (
-                        <p className="text-sm text-gray-500">No skills defined yet.</p>
-                      ) : (
-                        <ul role="list" className="divide-y divide-gray-200">
+    
+          
+            
+              <div className="bg-white shadow rounded-lg overflow-hidden">
+                <div className="px-4 py-5 sm:p-6">
+
+                  <div className="mt-4">
+                    {classLevel.skills.length === 0 ? (
+                      <p className="text-sm text-gray-500">
+                        No skills defined yet.
+                      </p>
+                    ) : (
+                      <ul role="list" className="divide-y divide-gray-200">
                         {classLevel.skills.map((skill: Skill) => (
-                            <li key={skill.id} className="py-4">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h4 className="text-lg font-medium text-gray-900">
-                                    {skill.name}
-                                  </h4>
-                                  {skill.description && (
-                                    <p className="mt-1 text-sm text-gray-500">
-                                      {skill.description}
-                                    </p>
-                                  )}
-                                </div>
+                          <li key={skill.id} className="py-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="text-lg font-medium text-gray-900">
+                                  {skill.name}
+                                </h4>
+                                {skill.description && (
+                                  <p className="mt-1 text-sm text-gray-500">
+                                    {skill.description}
+                                  </p>
+                                )}
+                              </div>
                               <div className="ml-4 flex-shrink-0 flex items-center space-x-4">
                                 <SkillDialog
                                   organizationId={organizationId}
                                   levelId={levelId}
                                   editingSkill={skill}
                                 />
-                                </div>
                               </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
+                </div>
               </div>
-            </div>
+            
+            
+          
           </div>
         </div>
-      </main>
     </>
   );
-} 
+}

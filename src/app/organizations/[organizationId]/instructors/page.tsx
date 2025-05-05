@@ -135,18 +135,10 @@ export default async function InstructorsPage({ params }: PageProps) {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Manage Instructors & Lessons</h2>
-            <p className="mt-2 text-sm text-gray-500">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Manage Instructors & Lessons</h2>
+            <p className="text-gray-600">
               Add and manage instructors and lessons for {organization.name}
             </p>
-          </div>
-          <div className="flex gap-3">
-            <AddInstructorDialog organizationId={organizationId} />
-            <AddLessonDialog
-              organizationId={organizationId}
-              classLevels={classLevels}
-              instructors={simplifiedInstructors}
-            />
           </div>
         </div>
 
@@ -161,3 +153,5 @@ export default async function InstructorsPage({ params }: PageProps) {
     </div>
   );
 } 
+
+
