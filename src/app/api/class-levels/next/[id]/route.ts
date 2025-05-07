@@ -61,6 +61,7 @@ export async function GET(
       id: nextLevel.id,
       name: nextLevel.name,
       sortOrder: nextLevel.sortOrder,
+      color: nextLevel.color,
     });
   } catch (error) {
     console.error("Error fetching next class level:", error);

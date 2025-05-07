@@ -108,69 +108,66 @@ export function InstructorList({
       {instructors.length === 0 ? (
         <p className="text-sm text-gray-500">No instructors added yet.</p>
       ) : (
-<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-  {instructors.map((inst) => (
-    <div
-      key={inst.id}
-      className={cn(
-        "bg-white p-6 rounded-lg shadow flex flex-col justify-between transition",
-        selected?.id === inst.id
-          ? "ring-2 ring-indigo-500"
-          : "hover:shadow-lg"
-      )}
-    >
-      {/* Header: info + lesson toggle */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            {inst.user.name ?? "Unnamed"}
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {inst.user.email}
-          </p>
-          {inst.phoneNumber && (
-            <p className="mt-1 text-sm text-gray-500">
-              {inst.phoneNumber}
-            </p>
-          )}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {instructors.map((inst) => (
+          <div
+            key={inst.id}
+            className={cn(
+              "bg-white p-6 rounded-lg shadow flex flex-col justify-between transition",
+              selected?.id === inst.id
+                ? "ring-2 ring-indigo-500"
+                : "hover:shadow-lg"
+            )}
+          >
+            {/* only this header toggles */}
+            <div
+              onClick={() =>
+                setSelected(prev => (prev?.id === inst.id ? null : inst))
+              }
+              className="flex justify-between items-center cursor-pointer"
+            >
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {inst.user.name ?? "Unnamed"}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {inst.user.email}
+                </p>
+                {inst.phoneNumber && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    {inst.phoneNumber}
+                  </p>
+                )}
+              </div>
+              <span className="text-sm font-medium text-indigo-600">
+                {inst.lessons.length} lesson
+                {inst.lessons.length !== 1 && "s"}
+              </span>
+            </div>
+            {/* actions live here; clicks won’t bubble up */}
+            <div className="mt-4 flex space-x-2">
+            <EditInstructorDialog
+              organizationId={organizationId}
+              instructor={{
+                id: inst.id,
+                userId: inst.userId,
+                phoneNumber: inst.phoneNumber,
+                user: {
+                name: inst.user.name ?? "Unnamed",
+                email: inst.user.email,
+                },
+              }}
+            />
+              <DeleteConfirmationDialog
+                onDelete={() => handleDeleteInstructor(inst.id)}
+                isDeleting={loading}
+                itemType="instructor"
+                itemName={inst.user.name ?? "Unnamed"}
+              />
+            </div>
+          </div>
+          ))}
         </div>
-        <button
-          onClick={() =>
-            setSelected((prev) =>
-              prev?.id === inst.id ? null : inst
-            )
-          }
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
-        >
-          {inst.lessons.length} lesson
-          {inst.lessons.length !== 1 && "s"}
-        </button>
-      </div>
-
-      {/* Footer: action icons */}
-      <div className="mt-4 flex justify-end space-x-2">
-        <EditInstructorDialog
-          organizationId={organizationId}
-          instructor={{
-            id: inst.id,
-            userId: inst.userId,
-            phoneNumber: inst.phoneNumber,
-            user: {
-              name: inst.user.name ?? "Unnamed",
-              email: inst.user.email,
-            },
-          }}
-        />
-        <DeleteConfirmationDialog
-          onDelete={() => handleDeleteInstructor(inst.id)}
-          isDeleting={loading}
-          itemType="instructor"
-          itemName={inst.user.name ?? "Unnamed"}
-        />
-      </div>
-    </div>
-  ))}
-</div>
       )}
 
         {/* Once you’ve drilled in, show lessons + “Add Lesson” in its own header */}

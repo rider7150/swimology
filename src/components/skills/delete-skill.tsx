@@ -62,13 +62,9 @@ export function DeleteSkill({ organizationId, levelId, skillId, skillName }: Del
         <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
           <div className="flex justify-between items-center mb-4">
             <Dialog.Title className="text-lg font-semibold text-red-600">
-              Delete Skill
+            Are you absolutely sure?
             </Dialog.Title>
-            <Dialog.Close asChild>
-              <button className="text-gray-400 hover:text-gray-500">
-                <X className="h-4 w-4" />
-              </button>
-            </Dialog.Close>
+
           </div>
           <Dialog.Description className="mt-2 text-sm text-gray-500">
             Are you sure you want to delete {skillName}? This action cannot be undone.

@@ -72,7 +72,7 @@ export function DeleteClassLevel({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Are you absolutely sure?</DialogTitle>
+          <DialogTitle  className="text-lg font-semibold text-red-600">Are you absolutely sure?</DialogTitle>
           <DialogDescription>
             This will permanently delete the {levelName} level and all its associated skills and lessons.
             This action cannot be undone.

@@ -92,8 +92,8 @@ export async function GET() {
         // Format the time strings
         //const startTime = format(lesson.startTime, 'HH:mm');
         //const endTime = format(lesson.endTime, 'HH:mm');
-        const startTime = formatTime(lesson.startTime);
-        const endTime = formatTime(lesson.endTime) ;
+       // const startTime = formatTime(lesson.startTime);
+        // const endTime = formatTime(lesson.endTime) ;
         // console.log('startTime', startTime);
         // console.log('endTime', endTime);
         return {
@@ -101,8 +101,8 @@ export async function GET() {
           month: lesson.startDate.getMonth() + 1,
           year: lesson.startDate.getFullYear(),
           dayOfWeek: lesson.dayOfWeek,
-          startTime,
-          endTime,
+          startTime: lesson.startTime,
+          endTime: lesson.endTime,
           classLevel: {
             id: lesson.classLevel.id,
             name: lesson.classLevel.name,

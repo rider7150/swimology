@@ -52,11 +52,7 @@ export function SkillDialog({ organizationId, levelId, editingSkill, onSuccess }
               <Dialog.Title className="text-lg font-semibold">
                 {editingSkill ? "Edit Skill" : "Add New Skill"}
               </Dialog.Title>
-              <Dialog.Close asChild>
-                <button className="text-gray-400 hover:text-gray-500">
-                  <X className="h-4 w-4" />
-                </button>
-              </Dialog.Close>
+
             </div>
             <SkillForm
               organizationId={organizationId}

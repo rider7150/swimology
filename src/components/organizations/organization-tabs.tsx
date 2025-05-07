@@ -41,7 +41,7 @@ export function OrganizationTabs({ organizationId }: OrganizationTabsProps) {
   };
 
   return (
-    <div className="border-b border-gray-200 sm:flex sm:space-x-6">
+    <div className="border-b border-gray-200 sm:flex sm:px-2">
       {/* Dropdown for small screens */}
       <div className="sm:hidden relative w-full">
         <Listbox value={currentTab} onChange={handleTabSelect}>

@@ -23,21 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+
 import { format, parse } from "date-fns";
-import { Check, Clock } from "lucide-react";
+
+
 
 const formSchema = z.object({
   classLevelId: z.string().min(1, { message: "Class level is required" }),
@@ -384,7 +373,7 @@ export function LessonForm({
                 <div className="relative">
                   <Input
                     type="text"
-                    placeholder="Enter time (e.g., 3:30 PM)"
+                    placeholder="Enter time (e.g., 15:30)"
                     value={field.value}
                     onChange={(e) => field.onChange(e.target.value)}
                     disabled={loading}
@@ -403,7 +392,7 @@ export function LessonForm({
                 <div className="relative">
                   <Input
                     type="text"
-                    placeholder="Enter time (e.g., 3:30 PM)"
+                    placeholder="Enter time (e.g., 15:30)"
                     value={field.value}
                     onChange={(e) => field.onChange(e.target.value)}
                     disabled={loading}

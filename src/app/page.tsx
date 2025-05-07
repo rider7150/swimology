@@ -170,7 +170,10 @@ async function getLessonsForInstructor(userId: string) {
           color: ((lesson as any).classLevel as any).color,
           sortOrder: (lesson as any).classLevel.sortOrder,
         },
-        month: ((lesson as any).startDate instanceof Date ? (lesson as any).startDate.getMonth() + 1 : new Date((lesson as any).startDate).getMonth() + 1),
+        startDate: (lesson as any).startDate,
+        endDate: (lesson as any).endDate,
+        progress: 0, // Set a default value or calculate if available
+        enrollmentId: "", // Set a default or derive from context if possible
         year: ((lesson as any).startDate instanceof Date ? (lesson as any).startDate.getFullYear() : new Date((lesson as any).startDate).getFullYear()),
         dayOfWeek: (lesson as any).dayOfWeek,
         startTime: (lesson as any).startTime,

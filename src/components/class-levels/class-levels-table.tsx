@@ -82,7 +82,7 @@ function SortableRow({
   return (
     <tr ref={setNodeRef} style={style} className={rowClasses}>
       {/* Name */}
-        <td className="whitespace-nowrap overflow-hidden py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+        <td className="whitespace-nowrap overflow-hidden py-3 pl-2 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
         <div className="flex items-center gap-0 overflow-hidden">
           <button className="flex-shrink-0 cursor-move touch-none" {...attributes} {...listeners}>
             <GripVertical className="h-4 w-4 text-gray-400" />

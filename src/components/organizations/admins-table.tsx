@@ -8,16 +8,18 @@ import { AddAdminDialog } from "./add-admin-dialog";
 import { EditAdminDialog } from "./edit-admin-dialog";
 import { PencilIcon, Trash2Icon, X } from "lucide-react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 interface Admin {
   id: string;
   user: {
@@ -134,34 +136,42 @@ export function AdminsTable({ organizationId }: AdminsTableProps) {
         </table>
       </div>
 
-      <AlertDialog open={!!adminToDelete} onOpenChange={() => setAdminToDelete(null)}>
-        <AlertDialogContent>
+      <Dialog open={!!adminToDelete} onOpenChange={() => setAdminToDelete(null)}>
+      <DialogPortal>
+        <DialogOverlay className="fixed inset-0 z-50 bg-black/80" />
+        <DialogContent>
           <div className="flex justify-between items-center">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently remove {adminToDelete?.user.name || adminToDelete?.user.email} as an admin from this organization.
-                This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <button 
-              className="text-gray-400 hover:text-gray-500"
-              onClick={() => setAdminToDelete(null)}
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <DialogHeader>
+              <DialogTitle  className="text-lg font-semibold text-red-600">Are you absolutely sure?</DialogTitle>
+              <DialogDescription>
+                This will permanently remove{" "}
+                {adminToDelete?.user.name || adminToDelete?.user.email} as an
+                admin from this organization. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
           </div>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => adminToDelete && removeAdmin(adminToDelete)}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Remove Admin
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button
+               variant="outline"
+              >
+                Cancel
+              </Button>
+            </DialogClose>
+
+            <DialogClose asChild>
+              <Button
+                onClick={() => adminToDelete && removeAdmin(adminToDelete)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Remove Admin
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPortal>
+    </Dialog>
     </div>
   );
 } 
