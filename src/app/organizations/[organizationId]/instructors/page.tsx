@@ -31,6 +31,7 @@ export default async function InstructorsPage({ params }: PageProps) {
     },
   });
 
+  
   if (!user) {
     redirect("/");
   }

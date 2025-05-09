@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 
 type Parent = {
   id: string;
@@ -28,10 +28,13 @@ export default function OrganizationParentsPage({
   const [deletingParent, setDeletingParent] = useState<Parent | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const nameRef = useRef<HTMLInputElement>(null);
-  const emailRef = useRef<HTMLInputElement>(null);
-  const phoneRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
+  // Form state for editing
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+  });
 
   // Fetch parents when organizationId changes
   useEffect(() => {
@@ -46,6 +49,18 @@ export default function OrganizationParentsPage({
       setParents(await res.json());
     }
   };
+
+  // Populate form when editingParent changes
+  useEffect(() => {
+    if (editingParent) {
+      setForm({
+        name: editingParent.name ?? '',
+        email: editingParent.email ?? '',
+        phone: editingParent.phone ?? '',
+        password: '',
+      });
+    }
+  }, [editingParent]);
 
   // Delete confirmation handler
   const handleDeleteConfirm = async () => {
@@ -77,18 +92,21 @@ export default function OrganizationParentsPage({
 
     setLoading(true);
 
+    const payload: Record<string, string> = {
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+    };
+    if (form.password) {
+      payload.password = form.password;
+    }
+
     const res = await fetch(
       `/api/organizations/${organizationId}/parents`,
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: editingParent.id,
-          name: nameRef.current!.value,
-          email: emailRef.current!.value,
-          phone: phoneRef.current!.value,
-          password: passwordRef.current!.value,
-        }),
+        body: JSON.stringify({ id: editingParent.id, ...payload }),
       }
     );
 
@@ -101,6 +119,13 @@ export default function OrganizationParentsPage({
       const err = await res.json();
       alert(err.error || 'Failed to update parent');
     }
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
   };
 
   return (
@@ -195,54 +220,33 @@ export default function OrganizationParentsPage({
         >
           <DialogContent onPointerDownOutside={() => setEditingParent(null)}>
             <DialogTitle>Edit Parent</DialogTitle>
-            <form
-              onSubmit={handleEditSave}
-              className="space-y-4 pt-4"
-            >
+            <form onSubmit={handleEditSave} className="space-y-4 pt-4">
               {[
-                {
-                  label: 'Name',
-                  ref: nameRef,
-                  type: 'text',
-                  defaultValue: editingParent.name,
-                },
-                {
-                  label: 'Email',
-                  ref: emailRef,
-                  type: 'email',
-                  defaultValue: editingParent.email,
-                },
-                {
-                  label: 'Phone',
-                  ref: phoneRef,
-                  type: 'text',
-                  defaultValue: editingParent.phone,
-                },
-                {
-                  label: 'Password',
-                  ref: passwordRef,
-                  type: 'password',
-                  placeholder: '••••••••',
-                },
+                { label: 'Name', name: 'name', type: 'text', placeholder: 'Full name' },
+                { label: 'Email', name: 'email', type: 'email', placeholder: 'you@example.com' },
+                { label: 'Phone', name: 'phone', type: 'text', placeholder: '(123) 456-7890' },
+                { label: 'Password', name: 'password', type: 'password', placeholder: '••••••••' },
               ].map((field) => (
-                <div key={field.label}>
+                <div key={field.name}>
                   <label className="block text-sm font-medium text-gray-700">
                     {field.label}
                   </label>
                   <input
-                    ref={field.ref as any}
+                    name={field.name}
                     type={field.type}
-                    defaultValue={(field as any).defaultValue}
-                    placeholder={(field as any).placeholder}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2"
+                    value={(form as any)[field.name]}
+                    placeholder={field.placeholder}
+                    onChange={handleChange}
+                    className="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2"
                   />
-                  {field.label === 'Password' && (
+                  {field.name === 'password' && (
                     <p className="mt-1 text-xs text-gray-500">
-                      Leave blank to keep current
+                      Leave blank to keep current password
                     </p>
                   )}
                 </div>
               ))}
+
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
                   type="button"
@@ -272,12 +276,13 @@ export default function OrganizationParentsPage({
           onOpenChange={(open) => !open && setDeletingParent(null)}
         >
           <DialogContent onPointerDownOutside={() => setDeletingParent(null)}>
-            <DialogTitle className="text-lg font-semibold text-red-600">Are you absolutely sure?</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-red-600">
+              Are you absolutely sure?
+            </DialogTitle>
             <div className="pt-4">
               <p className="text-gray-700">
-              This will permanently remove{" "}
-                {deletingParent.name} as a
-                parent from this organization. This action cannot be undone?
+                This will permanently remove {deletingParent.name} as a
+                parent from this organization. This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-2 mt-6">
                 <Button

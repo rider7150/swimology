@@ -6,6 +6,7 @@ if (!process.env.RESEND_API_KEY) {
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+
 export interface EmailOptions {
   to: string;
   subject: string;
@@ -15,13 +16,16 @@ export interface EmailOptions {
 
 export async function sendEmail({ to, subject, html, from }: EmailOptions) {
   try {
-    const defaultFrom = 'Swimly <no-reply@swimly.app>';
+  console.log("RESEND_API_KEY:", process.env.RESEND_API_KEY);
+
+    const defaultFrom = 'Swimology <swimology@thekaofamily.org>';
     const result = await resend.emails.send({
       from: from || defaultFrom,
       to,
       subject,
       html,
     });
+    console.log("Email sent successfully:", result);
     return { success: true, data: result };
   } catch (error) {
     console.error('Error sending email:', error);
@@ -33,17 +37,17 @@ export async function sendEmail({ to, subject, html, from }: EmailOptions) {
 export async function sendWelcomeEmail(email: string, name: string) {
   const html = `
     <div>
-      <h1>Welcome to Swimly!</h1>
+      <h1>Welcome to Swimology!</h1>
       <p>Hi ${name},</p>
       <p>We're excited to have you on board. Get started by exploring your dashboard and setting up your profile.</p>
       <p>If you have any questions, feel free to reach out to our support team.</p>
-      <p>Best regards,<br/>The Swimly Team</p>
+      <p>Best regards,<br/>The Swimology Team</p>
     </div>
   `;
 
   return sendEmail({
     to: email,
-    subject: 'Welcome to Swimly',
+    subject: 'Welcome to Swimology',
     html,
   });
 }
@@ -56,13 +60,13 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
       <p>You requested to reset your password. Click the link below to set a new password:</p>
       <p><a href="${resetLink}">Reset Password</a></p>
       <p>If you didn't request this, you can safely ignore this email.</p>
-      <p>Best regards,<br/>The Swimly Team</p>
+      <p>Best regards,<br/>The Swimology Team</p>
     </div>
   `;
 
   return sendEmail({
     to: email,
-    subject: 'Reset Your Password - Swimly',
+    subject: 'Reset Your Password - Swimology',
     html,
   });
 }
@@ -86,13 +90,13 @@ export async function sendLessonConfirmationEmail(email: string, lessonDetails: 
         <li>Level: ${lessonDetails.level}</li>
       </ul>
       <p>We look forward to seeing you!</p>
-      <p>Best regards,<br/>The Swimly Team</p>
+      <p>Best regards,<br/>The Swimology Team</p>
     </div>
   `;
 
   return sendEmail({
     to: email,
-    subject: 'Lesson Confirmation - Swimly',
+    subject: 'Lesson Confirmation - Swimology',
     html,
   });
 } 

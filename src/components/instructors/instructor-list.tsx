@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -75,12 +75,25 @@ function formatTime(t: string) {
 
 export function InstructorList({
   organizationId,
-  instructors,
+  instructors: initialInstructors,
   classLevels,
 }: InstructorListProps) {
   const router = useRouter();
   const [selected, setSelected] = useState<Instructor | null>(null);
   const [loading, setLoading] = useState(false);
+  const [instructors, setInstructors] = useState(initialInstructors);
+
+  // Update local state when props change
+  useEffect(() => {
+    setInstructors(initialInstructors);
+    // If there's a selected instructor, update its data
+    if (selected) {
+      const updatedInstructor = initialInstructors.find(i => i.id === selected.id);
+      if (updatedInstructor) {
+        setSelected(updatedInstructor);
+      }
+    }
+  }, [initialInstructors, selected?.id]);
 
   async function handleDeleteInstructor(id: string) {
     setLoading(true);
@@ -96,11 +109,31 @@ export function InstructorList({
     router.refresh();
   }
 
+  // Function to refresh instructors data
+  const refreshInstructors = async () => {
+    try {
+      const response = await fetch(`/api/organizations/${organizationId}/instructors`);
+      if (response.ok) {
+        const data = await response.json();
+        setInstructors(data);
+        // If there's a selected instructor, update its data
+        if (selected) {
+          const updatedInstructor = data.find((i: Instructor) => i.id === selected.id);
+          if (updatedInstructor) {
+            setSelected(updatedInstructor);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing instructors:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Toolbar */}
       <div className="flex justify-end space-x-4">
-        {/* Renders its own “Add Instructor” button */}
+        {/* Renders its own "Add Instructor" button */}
         <AddInstructorDialog organizationId={organizationId} />
       </div>
 
@@ -144,7 +177,7 @@ export function InstructorList({
                 {inst.lessons.length !== 1 && "s"}
               </span>
             </div>
-            {/* actions live here; clicks won’t bubble up */}
+            {/* actions live here; clicks won't bubble up */}
             <div className="mt-4 flex space-x-2">
             <EditInstructorDialog
               organizationId={organizationId}
@@ -170,7 +203,7 @@ export function InstructorList({
         </div>
       )}
 
-        {/* Once you’ve drilled in, show lessons + “Add Lesson” in its own header */}
+        {/* Once you've drilled in, show lessons + "Add Lesson" in its own header */}
         {selected && (
           <div className="mt-8 bg-white shadow rounded-lg overflow-hidden">
             <div className="flex items-center justify-between px-6 pt-6">
@@ -184,6 +217,7 @@ export function InstructorList({
                   id: i.id,
                   user: { name: i.user.name ?? 'Unnamed', email: i.user.email }
                 }))}
+                onSuccess={refreshInstructors}
               />
             </div>
           <table className="w-full table-auto divide-y divide-gray-200 mt-4">
@@ -211,7 +245,6 @@ export function InstructorList({
                     {formatTime(lesson.startTime)}–{formatTime(lesson.endTime)}
                   </td>
                   <td className="px-6 py-4 text-right text-sm flex justify-end space-x-2">
-                    {/* Edit Lesson */}
                     <EditLessonDialog
                       organizationId={organizationId}
                       classLevels={classLevels}
@@ -229,11 +262,14 @@ export function InstructorList({
                         startTime: lesson.startTime,
                         endTime: lesson.endTime,
                       }}
+                      onSuccess={refreshInstructors}
                     />
 
-                    {/* Delete Lesson */}
                     <DeleteConfirmationDialog
-                      onDelete={() => handleDeleteLesson(lesson.id)}
+                      onDelete={async () => {
+                        await handleDeleteLesson(lesson.id);
+                        refreshInstructors();
+                      }}
                       isDeleting={loading}
                       itemType="lesson"
                       itemName={selected.user.name ?? "Lesson"}

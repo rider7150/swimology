@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "@/components/ui/use-toast";
-
+import { Input } from "@/components/ui/input";
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
@@ -20,6 +20,7 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
 
   const callbackUrl = searchParams?.get("callbackUrl") || "/";
 
@@ -60,6 +61,38 @@ export function LoginForm() {
     }
   };
 
+  const handleForgotPassword = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (forgotPasswordLoading) return;
+    
+    console.log("Forgot password clicked");
+    try {
+      setForgotPasswordLoading(true);
+      console.log("Current URL:", window.location.href);
+      console.log("Attempting navigation...");
+      
+      // Try using router.push with a callback
+      router.push("/forgot-password", { scroll: false });
+      
+      // Force a hard navigation after a short delay
+      setTimeout(() => {
+        console.log("Forcing hard navigation...");
+        window.location.href = "/forgot-password";
+      }, 100);
+      
+      console.log("Navigation initiated");
+    } catch (error) {
+      console.error("Navigation error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to navigate to forgot password page",
+        variant: "destructive",
+      });
+    } finally {
+      setForgotPasswordLoading(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
@@ -75,18 +108,18 @@ export function LoginForm() {
         >
           Email address
         </label>
-        <div className="mt-2">
-          <input
+
+          <Input
             id="email"
             type="email"
             autoComplete="email"
             {...register("email")}
-            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            className="mt-2"
           />
           {errors.email && (
             <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
           )}
-        </div>
+
       </div>
 
       <div>
@@ -96,17 +129,28 @@ export function LoginForm() {
         >
           Password
         </label>
-        <div className="mt-2">
-          <input
+          <Input
             id="password"
             type="password"
             autoComplete="current-password"
             {...register("password")}
-            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            className="mt-2"
           />
           {errors.password && (
             <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
           )}
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="text-sm">
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            disabled={forgotPasswordLoading}
+            className="font-medium text-indigo-600 hover:text-indigo-500 disabled:opacity-50"
+          >
+            {forgotPasswordLoading ? "Redirecting..." : "Forgot your password?"}
+          </button>
         </div>
       </div>
 

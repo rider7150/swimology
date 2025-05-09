@@ -14,6 +14,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface DeleteConfirmationDialogProps {
   onDelete: () => Promise<void>;
@@ -23,8 +24,10 @@ interface DeleteConfirmationDialogProps {
 }
 
 export function DeleteConfirmationDialog({ onDelete, isDeleting, itemType, itemName }: DeleteConfirmationDialogProps) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
           variant="ghost" 
@@ -56,27 +59,20 @@ export function DeleteConfirmationDialog({ onDelete, isDeleting, itemType, itemN
               <Button variant="outline">Cancel</Button>
             </DialogClose>
 
-            <DialogClose asChild>
-              <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onDelete();
-                }}
-                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </Button>
-            </DialogClose>
+            <Button
+              onClick={async (e) => {
+                e.preventDefault();
+                await onDelete();
+                setOpen(false);
+              }}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </DialogPortal>
     </Dialog>
-
-
-
-
-
-
   );
 } 

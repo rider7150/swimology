@@ -7,7 +7,7 @@ export default withAuth(
     const path = req.nextUrl.pathname;
 
     // Public routes - no middleware protection
-    if (path === "/" || path === "/login" || path === "/register") {
+    if (path === "/" || path === "/login" || path === "/register" || path === "/forgot-password" || path === "/reset-password") {
       return NextResponse.next();
     }
 
@@ -45,7 +45,7 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
         // Allow public routes without authentication
-        if (path === "/" || path === "/login" || path === "/register") {
+        if (path === "/" || path === "/login" || path === "/register" || path === "/forgot-password" || path === "/reset-password") {
           return true;
         }
         // Require authentication for all other routes

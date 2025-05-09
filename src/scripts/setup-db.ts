@@ -1,28 +1,57 @@
 import { PrismaClient } from "@prisma/client";
-import { hashPassword } from "@/lib/utils";
+import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+});
 
-async function main() {
-  // Create super admin user
-  const hashedPassword = await hashPassword("password123");
-  const superAdmin = await prisma.user.create({
-    data: {
-      email: "super@admin.com",
-      password: hashedPassword,
-      name: "Super Admin",
-      role: 'SUPER_ADMIN',
-    },
-  });
+async function setupDatabase() {
+  try {
+    console.log("Starting database setup...");
+    
+    // Test connection
+    await prisma.$connect();
+    console.log("Database connection successful!");
 
-  console.log("Created super admin user:", superAdmin);
+    // Create super admin
+    const email = "super@demo.com";
+    const password = "sts131";
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      console.log("Super admin already exists:", existingUser);
+    } else {
+      // Create new super admin
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const superAdmin = await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          role: "SUPER_ADMIN",
+          name: "Super Admin",
+        },
+      });
+      console.log("Super admin created:", superAdmin);
+    }
+
+    // List all users to verify
+    const allUsers = await prisma.user.findMany();
+    console.log("\nAll users in database:", allUsers);
+
+  } catch (error) {
+    console.error("Error during database setup:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  }); 
+// Run the setup
+setupDatabase(); 

@@ -1,9 +1,16 @@
-import { prisma } from "../lib/prisma";
-import { hashPassword } from "../lib/utils";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
+const prisma = new PrismaClient();
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+}
 
 async function createSuperAdmin() {
   try {
-    const email = "super@admin.com";
+    const email = "super@demo.com";
     const password = "super";
 
     // Check if super admin already exists

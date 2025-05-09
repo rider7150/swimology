@@ -5,6 +5,7 @@ import { Pencil } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { LessonForm } from "./lesson-form";
+import { useRouter } from "next/navigation";
 
 interface ClassLevel {
   id: string;
@@ -32,6 +33,7 @@ interface EditLessonDialogProps {
     startTime: string;
     endTime: string;
   };
+  onSuccess?: () => void;
 }
 
 export function EditLessonDialog({
@@ -39,8 +41,16 @@ export function EditLessonDialog({
   classLevels,
   instructors,
   lesson,
+  onSuccess,
 }: EditLessonDialogProps) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSuccess = () => {
+    setOpen(false);
+    router.refresh();
+    onSuccess?.();
+  };
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -59,7 +69,7 @@ export function EditLessonDialog({
               Edit Lesson
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-sm text-gray-500">
-              Update the lesson’s class level, instructor, date, and time, then click Save.
+              Update the lesson's class level, instructor, date, and time, then click Save.
             </Dialog.Description>
           </div>
 
@@ -68,7 +78,7 @@ export function EditLessonDialog({
             organizationId={organizationId}
             classLevels={classLevels}
             instructors={instructors}
-            onSuccess={() => setOpen(false)}
+            onSuccess={handleSuccess}
             onCancel={() => setOpen(false)}
             initialData={{
               id: lesson.id,

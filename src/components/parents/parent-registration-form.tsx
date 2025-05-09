@@ -6,11 +6,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { signIn } from "next-auth/react";
+import { Input } from "@/components/ui/input";
 
 const registrationSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   organizationId: z.string().min(1, "Organization is required"),
   membershipId: z.string().optional(),
 });
@@ -112,17 +113,14 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
           >
             Name
           </label>
-          <div className="mt-1">
-            <input
+            <Input
               type="text"
               id="name"
               {...register("name")}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
+              className="mt-1"            />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
             )}
-          </div>
         </div>
 
         <div>
@@ -132,17 +130,15 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
           >
             Email
           </label>
-          <div className="mt-1">
-            <input
+            <Input
               type="email"
               id="email"
               {...register("email")}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              className="mt-1"
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
             )}
-          </div>
         </div>
 
         <div>
@@ -152,20 +148,22 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
           >
             Password
           </label>
-          <div className="mt-1">
-            <input
+            <Input
               type="password"
               id="password"
               {...register("password")}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              className="mt-1"
             />
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">
                 {errors.password.message}
               </p>
             )}
-          </div>
+          <p className="mt-1 text-sm text-gray-500">
+                Password must be at least 6 characters long
+              </p>
         </div>
+
 
         <div>
           <label
@@ -174,11 +172,10 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
           >
             Organization
           </label>
-          <div className="mt-1">
             <select
               id="organizationId"
               {...register("organizationId")}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              className="w-full mt-1 py-2"
             >
               <option value="">Select an organization</option>
               {organizations.map((org) => (
@@ -192,7 +189,6 @@ export function ParentRegistrationForm({ organizations }: ParentRegistrationForm
                 {errors.organizationId.message}
               </p>
             )}
-          </div>
         </div>
 
         {selectedOrg?.membershipIdRequired && (

@@ -8,21 +8,23 @@ datasource db {
 }
 
 model User {
-  id            String      @id @default(cuid())
-  name          String?
-  email         String      @unique
-  password      String
-  role          UserRole    @default(PARENT)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  emailVerified DateTime?
-  image         String?
-  phoneNumber   String?
-  accounts      Account[]
-  admin         Admin?
-  instructor    Instructor?
-  parent        Parent?
-  sessions      Session[]
+  id               String      @id @default(cuid())
+  name             String?
+  email            String      @unique
+  password         String
+  role             UserRole    @default(PARENT)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  emailVerified    DateTime?
+  image            String?
+  phoneNumber      String?
+  resetToken       String?     @unique
+  resetTokenExpiry DateTime?
+  accounts         Account[]
+  admin            Admin?
+  instructor       Instructor?
+  parent           Parent?
+  sessions         Session[]
 }
 
 model Account {
@@ -113,11 +115,11 @@ model ClassLevel {
   name           String
   description    String?
   capacity       Int          @default(8)
-  color          String       @default("#3B82F6")
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organizationId String
   sortOrder      Int          @default(0)
+  color          String       @default("#3B82F6")
   organization   Organization @relation(fields: [organizationId], references: [id])
   lessons        Lesson[]
   skills         Skill[]
@@ -132,24 +134,24 @@ model Skill {
   updatedAt    DateTime        @updatedAt
   classLevel   ClassLevel      @relation(fields: [classLevelId], references: [id])
   progress     SkillProgress[]
-  lessons      Lesson[]
+  lessons      Lesson[]        @relation("LessonToSkill")
 }
 
 model Lesson {
-  id            String      @id @default(cuid())
-  classLevelId  String
-  instructorId  String
-  startDate     DateTime
-  endDate       DateTime
-  dayOfWeek     Int
-  startTime     DateTime
-  endTime       DateTime
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  classLevel    ClassLevel  @relation(fields: [classLevelId], references: [id], onDelete: Cascade)
-  instructor    Instructor  @relation(fields: [instructorId], references: [id], onDelete: Cascade)
-  enrollments   Enrollment[]
-  skills        Skill[]
+  id           String       @id @default(cuid())
+  classLevelId String
+  instructorId String
+  startDate    DateTime
+  endDate      DateTime
+  dayOfWeek    Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  startTime    DateTime
+  endTime      DateTime
+  enrollments  Enrollment[]
+  classLevel   ClassLevel   @relation(fields: [classLevelId], references: [id], onDelete: Cascade)
+  instructor   Instructor   @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  skills       Skill[]      @relation("LessonToSkill")
 
   @@index([classLevelId])
   @@index([instructorId])
@@ -178,9 +180,9 @@ model SkillProgress {
   status       SkillStatus @default(NOT_STARTED)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  notes        String?
   enrollment   Enrollment  @relation(fields: [enrollmentId], references: [id])
   skill        Skill       @relation(fields: [skillId], references: [id])
-  notes        String?     // Instructor notes for this skill progress
 
   @@unique([skillId, enrollmentId])
 }

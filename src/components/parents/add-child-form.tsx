@@ -53,11 +53,16 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isValid },
   } = useForm<AddChildData>({
     resolver: zodResolver(addChildSchema),
     mode: "onChange",          // track validity as user types
   });
+
+  // Watch the lessonId field
+  const lessonId = watch("lessonId");
+
 
   // Fetch lessons & instructors
   useEffect(() => {
@@ -181,6 +186,7 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
               onChange={(date) => {
                 if (date) {
                   setStartDate(date);
+                  setValue("birthDate", format(date, "MM/dd/yyyy")); // Set birthDate value
                 }
               }}
               dateFormat="MM/dd/yyyy"
@@ -238,6 +244,9 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
               <select
                 id="lessonId"
                 {...register("lessonId")}
+                onChange={(e) => {
+                  setValue("lessonId", e.target.value); // This will trigger validation
+                }}
                 className="mt-1 block w-full border rounded p-2"
               >
                 <option value="">Select a lesson</option>
@@ -260,7 +269,7 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
             </Button>
             <Button
               type="submit"
-              disabled={!isValid || loading}
+              disabled={loading || !lessonId}
               className="px-4 py-2 bg-blue-600 text-white disabled:opacity-50"
             >
               {loading ? "Adding..." : "Add Child"}

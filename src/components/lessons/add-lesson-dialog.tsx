@@ -5,6 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { LessonForm } from "./lesson-form";
+import { useRouter } from "next/navigation";
 
 interface ClassLevel {
   id: string;
@@ -27,14 +28,23 @@ interface AddLessonDialogProps {
       name: string;
     };
   }[];
+  onSuccess?: () => void;
 }
 
 export function AddLessonDialog({
   organizationId,
   classLevels,
   instructors,
+  onSuccess,
 }: AddLessonDialogProps) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSuccess = () => {
+    setOpen(false);
+    router.refresh();
+    onSuccess?.();
+  };
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -54,7 +64,7 @@ export function AddLessonDialog({
               Add New Lesson
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-sm text-gray-500">
-              Choose a class level and instructor, then set the date and time for the lesson and click “Save.”
+              Choose a class level and instructor, then set the date and time for the lesson and click "Save."
             </Dialog.Description>
           </div>
 
@@ -63,7 +73,7 @@ export function AddLessonDialog({
             organizationId={organizationId}
             classLevels={classLevels}
             instructors={instructors}
-            onSuccess={() => setOpen(false)}
+            onSuccess={handleSuccess}
             onCancel={() => setOpen(false)}
           />
         </Dialog.Content>
