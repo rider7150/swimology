@@ -18,7 +18,7 @@ export async function sendEmail({ to, subject, html, from }: EmailOptions) {
   try {
   console.log("RESEND_API_KEY:", process.env.RESEND_API_KEY);
 
-    const defaultFrom = 'Swimology <swimology@thekaofamily.org>';
+    const defaultFrom = 'Swimology <swimology@oaklabs.app>';
     const result = await resend.emails.send({
       from: from || defaultFrom,
       to,
