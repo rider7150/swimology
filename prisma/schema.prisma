@@ -25,6 +25,7 @@ model User {
   instructor       Instructor?
   parent           Parent?
   sessions         Session[]
+  googleAccounts   GoogleAccount[]
 }
 
 model Account {
@@ -185,6 +186,20 @@ model SkillProgress {
   skill        Skill       @relation(fields: [skillId], references: [id])
 
   @@unique([skillId, enrollmentId])
+}
+
+model GoogleAccount {
+  id            String   @id @default(uuid())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  googleId      String   // Google account ID
+  email         String
+  displayName   String?
+  accessToken   String
+  refreshToken  String
+  color         String   // Hex color code for this account
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 enum UserRole {

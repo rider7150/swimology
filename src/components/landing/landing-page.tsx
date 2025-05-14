@@ -19,7 +19,7 @@ export function LandingPage() {
             <p className="text-sm text-grey-500">* Not affiliated with the YMCA</p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link href="/register">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-500">
+                <Button size="lg" className="bg-blue-600 text-white hover:bg-blue-500">
                   Register as Parent
                 </Button>
               </Link>
