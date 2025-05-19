@@ -45,7 +45,7 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
         // Allow public routes without authentication
-        if (path === "/" || path === "/login" || path === "/register" || path === "/forgot-password" || path === "/reset-password") {
+        if (path === "/" || path === "/login" || path === "/register" || path === "/forgot-password" || path === "/reset-password" || path.startsWith('/images/')) {
           return true;
         }
         // Require authentication for all other routes
