@@ -133,7 +133,11 @@ export async function GET(
         },
       },
       include: {
-        instructor: true,
+        instructor: {
+          include: {
+            user: true
+          }
+        },
         classLevel: true,
       },
     });

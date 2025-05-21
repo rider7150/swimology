@@ -27,6 +27,7 @@
     "@radix-ui/react-select": "^2.2.2",
     "@radix-ui/react-slot": "^1.2.0",
     "@radix-ui/react-switch": "^1.2.2",
+    "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.2.11",
     "@tailwindcss/forms": "^0.5.10",
     "async_hooks": "^1.0.0",

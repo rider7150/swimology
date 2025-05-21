@@ -95,19 +95,30 @@ model Parent {
   membershipId   String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  children       Child[]
+  children       ParentChild[]
   organization   Organization @relation(fields: [organizationId], references: [id])
   user           User         @relation(fields: [userId], references: [id])
+}
+
+model ParentChild {
+  id        String   @id @default(cuid())
+  parentId  String
+  childId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  parent    Parent   @relation(fields: [parentId], references: [id])
+  child     Child    @relation(fields: [childId], references: [id])
+
+  @@unique([parentId, childId])
 }
 
 model Child {
   id          String       @id @default(cuid())
   name        String
   birthDate   DateTime
-  parentId    String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  parent      Parent       @relation(fields: [parentId], references: [id])
+  parents     ParentChild[]
   enrollments Enrollment[]
 }
 

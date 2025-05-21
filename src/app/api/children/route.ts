@@ -93,19 +93,20 @@ type ChildWithEnrollments = PrismaChild & {
   }>;
 };
 
-type InferredChild = Awaited<ReturnType<typeof getChildren>>;
+type InferredChild = Awaited<ReturnType<typeof getChildrenForParent>>;
 type DbChild = InferredChild[number];
 
-async function getChildren(parentId: string) {
-  return prisma.child.findMany({
-    where: {
-      parentId: parentId,
-    },
+async function getChildrenForParent(parentId: string) {
+  // Find all ParentChild joins for this parent
+  const parentChildren = await prisma.parentChild.findMany({
+    where: { parentId },
     include: {
-      enrollments: {
+      child: {
         include: {
-          lesson: {
+          enrollments: {
             include: {
+              lesson: {
+                include: {
               classLevel: {
                 include: {
                   skills: true,
@@ -114,58 +115,60 @@ async function getChildren(parentId: string) {
             },
           },
           progress: true,
+            },
+          },
         },
       },
     },
   });
+  // Return just the child objects
+  return parentChildren.map((pc: any) => pc.child);
 }
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session) {
       return NextResponse.json(
         { error: "Not authenticated" },
         { status: 401 }
       );
     }
-
     // Get the parent record for the current user
     const parent = await prisma.parent.findFirst({
       where: { userId: session.user.id },
     });
-
     if (!parent) {
       return NextResponse.json(
         { error: "Parent record not found" },
         { status: 404 }
       );
     }
-
     const body = await request.json();
     const validatedData = childSchema.parse(body);
-
-    // Create the child record and enrollment if lessonId is provided
+    // Create the child record and ParentChild join (and enrollment if lessonId is provided)
     const child = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const newChild = await tx.child.create({
         data: {
           name: validatedData.name,
           birthDate: new Date(validatedData.birthDate),
-          parentId: parent.id,
         },
       });
-
+      // Create the ParentChild join
+      await tx.parentChild.create({
+        data: {
+          parentId: parent.id,
+          childId: newChild.id,
+        },
+      });
       if (validatedData.lessonId) {
         const lesson = await tx.lesson.findUnique({
           where: { id: validatedData.lessonId },
           include: { classLevel: { include: { skills: true } } },
         });
-
         if (!lesson) {
           throw new Error("Lesson not found");
         }
-
         // Check if child is already enrolled in a class of the same level
         const existingEnrollment = await tx.enrollment.findFirst({
           where: {
@@ -173,16 +176,14 @@ export async function POST(request: Request) {
             lesson: {
               classLevelId: lesson.classLevelId,
               endDate: {
-                gte: new Date()
-              }
-            }
-          }
+                gte: new Date(),
+              },
+            },
+          },
         });
-
         if (existingEnrollment) {
           throw new Error("Child is already enrolled in a class of this level");
         }
-
         const enrollment = await tx.enrollment.create({
           data: {
             childId: newChild.id,
@@ -191,7 +192,6 @@ export async function POST(request: Request) {
             endDate: lesson.endDate,
           },
         });
-
         // Create SkillProgress for all skills in the class level
         for (const skill of lesson.classLevel.skills) {
           await tx.skillProgress.create({
@@ -203,10 +203,8 @@ export async function POST(request: Request) {
           });
         }
       }
-
       return newChild;
     });
-
     return NextResponse.json(child);
   } catch (error) {
     console.error("Error adding child:", error);
@@ -226,74 +224,68 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session) {
       return NextResponse.json(
         { error: "Not authenticated" },
         { status: 401 }
       );
     }
-
     const parent = await prisma.parent.findFirst({
       where: { userId: session.user.id },
     });
-
     if (!parent) {
       return NextResponse.json(
         { error: "Parent not found" },
         { status: 404 }
       );
     }
-
-    const children = await getChildren(parent.id);
-
+    const children = await getChildrenForParent(parent.id);
     return NextResponse.json(
-      children.map((child: Awaited<ReturnType<typeof getChildren>>[number]) => {
+      children.map((child: any) => {
         return {
           id: child.id,
           name: child.name,
           birthDate: child.birthDate,
-          lessons: child.enrollments.map((enrollment: typeof child.enrollments[number]) => {
-            type Skill = typeof enrollment.lesson.classLevel.skills[number];
-            type Progress = typeof enrollment.progress[number];
-
-            // Map skills to expected type
-            const skills = enrollment.lesson.classLevel.skills.map((skill: Skill) => {
-              const progressObj = enrollment.progress.find((p: Progress) => p.skillId === skill.id);
-              return {
-                id: skill.id,
-                name: skill.name,
-                description: skill.description,
-                status: progressObj?.status || "NOT_STARTED",
-                notes: progressObj?.notes || ""
-              };
-            });
-
-            const completedSkills = skills.filter((skill: { status: string }) => skill.status === "COMPLETED").length;
-            const progress = skills.length > 0 ? Math.round((completedSkills / skills.length) * 100) : 0;
-
+          lessons: (child.enrollments || []).map((enrollment: any) => {
             return {
               id: enrollment.lesson.id,
-              name: enrollment.lesson.classLevel.name,
-              progress,
-              skills,
-              classLevel: {
-                id: enrollment.lesson.classLevel.id,
-                name: enrollment.lesson.classLevel.name,
-                sortOrder: enrollment.lesson.classLevel.sortOrder,
-                color: enrollment.lesson.classLevel.color || "#3B82F6"
-              },
-              dayOfWeek: enrollment.lesson.dayOfWeek,
-              startTime: enrollment.lesson.startTime.toISOString(),
-              endTime: enrollment.lesson.endTime.toISOString(),
+              name: enrollment.lesson.name,
               startDate: enrollment.lesson.startDate,
               endDate: enrollment.lesson.endDate,
+              dayOfWeek: enrollment.lesson.dayOfWeek,
+              startTime: enrollment.lesson.startTime,
+              endTime: enrollment.lesson.endTime,
+              classLevel: enrollment.lesson.classLevel
+                ? {
+                    id: enrollment.lesson.classLevel.id,
+                    name: enrollment.lesson.classLevel.name,
+                    color: enrollment.lesson.classLevel.color,
+                    skills: (enrollment.lesson.classLevel.skills || []).map((skill: any) => ({
+                      id: skill.id,
+                      name: skill.name,
+                      description: skill.description,
+                    })),
+                  }
+                : null,
+              progress: enrollment.progress || [],
               readyForNextLevel: enrollment.readyForNextLevel || false,
-              strengthNotes: enrollment.strengthNotes || "",
-              improvementNotes: enrollment.improvementNotes || "",
-              enrollmentId: enrollment.id
+              strengthNotes: enrollment.strengthNotes || null,
+              improvementNotes: enrollment.improvementNotes || null,
+              enrollmentId: enrollment.id,
+              skills: (enrollment.lesson.classLevel?.skills || []).map((skill: any) => {
+                const prog = (enrollment.progress || []).find((p: any) => p.skillId === skill.id);
+                return {
+                  id: skill.id,
+                  name: skill.name,
+                  description: skill.description,
+                  status: prog?.status || "NOT_STARTED",
+                  notes: prog?.notes || null,
+                  strengthNotes: prog?.strengthNotes || null,
+                  improvementNotes: prog?.improvementNotes || null,
             };
-          })
+              }),
+            };
+          }),
         };
       })
     );

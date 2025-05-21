@@ -23,17 +23,33 @@ export async function DELETE(
       where: { userId: session.user.id },
     });
 
-    // Get the child with their enrollments to verify ownership
+    // Get the ParentChild join for this parent and child
+    const parentChild = await prisma.parentChild.findFirst({
+      where: { parentId: parent?.id, childId: params.id },
+    });
+
+    if (!parentChild) {
+      return NextResponse.json(
+        { error: "You can only delete your own children" },
+        { status: 403 }
+      );
+    }
+
+    // Get all parents for this child
+    const allParentJoins = await prisma.parentChild.findMany({
+      where: { childId: params.id },
+    });
+
+    // Get the child with enrollments
     const child = await prisma.child.findUnique({
       where: { id: params.id },
       include: {
-        parent: true,
         enrollments: {
           include: {
-            progress: true
-          }
-        }
-      }
+            progress: true,
+          },
+        },
+      },
     });
 
     if (!child) {
@@ -43,41 +59,32 @@ export async function DELETE(
       );
     }
 
-    // Check if the user is the parent of this child
-    if (!parent || child.parentId !== parent.id) {
-      return NextResponse.json(
-        { error: "You can only delete your own children" },
-        { status: 403 }
-      );
-    }
-
-    // Delete the child and all related records in a transaction
+    // If this parent is the only parent, delete the child and all related records
+    if (allParentJoins.length === 1) {
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // First delete all skill progress records for all enrollments
       if (child.enrollments.length > 0) {
         await tx.skillProgress.deleteMany({
           where: {
             enrollmentId: {
-              in: child.enrollments.map(e => e.id)
-            }
-          }
+                in: child.enrollments.map((e) => e.id),
+              },
+            },
         });
       }
-
       // Delete all enrollments
       await tx.enrollment.deleteMany({
-        where: {
-          childId: child.id
-        }
+          where: { childId: child.id },
       });
-
+        // Delete the ParentChild join
+        await tx.parentChild.deleteMany({ where: { childId: child.id } });
       // Finally delete the child
-      await tx.child.delete({
-        where: {
-          id: child.id
-        }
+        await tx.child.delete({ where: { id: child.id } });
       });
-    });
+    } else {
+      // Otherwise, just remove the ParentChild join
+      await prisma.parentChild.delete({ where: { id: parentChild.id } });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

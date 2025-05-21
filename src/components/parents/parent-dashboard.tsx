@@ -116,9 +116,31 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
     }, [selectedChild]);
 
   // Formatting helpers
-  const formatTime = (t: string | Date) => format(typeof t === "string" ? new Date(t) : t, "h:mm a");
+  const formatTime = (t: string | Date) => {
+    try {
+      const date = typeof t === "string" ? new Date(t) : t;
+      if (isNaN(date.getTime())) return "Invalid time";
+      return format(date, "h:mm a");
+    } catch (error) {
+      console.error("Error formatting time:", error);
+      return "Invalid time";
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "Invalid date";
+      return format(date, "MMMM yyyy");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
+  };
+
   const getDayName = (d: number) =>
-    ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][d];
+    ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][d] || "Unknown day";
+
   const getStatusColor = (s: Skill["status"]) =>
     s === "COMPLETED"
       ? "bg-green-100 hover:bg-green-200 text-green-600"
@@ -242,16 +264,16 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
                 >
                                       {lesson && (
                       <div className="mt-2 text-xs text-gray-500 font-normal">
-                      { format(new Date(lesson.startDate), 'MMMM yyyy')} • {getDayName(lesson.dayOfWeek)}s • {format(new Date(lesson.startTime), 'h:mm a')} - {format(new Date(lesson.endTime), 'h:mm a')}
+                      {formatDate(lesson.startDate)} • {getDayName(lesson.dayOfWeek)}s • {formatTime(lesson.startTime)} - {formatTime(lesson.endTime)}
                       </div>
                     )}
 
                   <div className="flex justify-between items-center mb-2">
                     <span
                       className="rounded-full px-3 py-1 text-xs font-semibold text-white"
-                      style={{ backgroundColor: lesson.classLevel.color || "#3b82f6" }}
+                      style={{ backgroundColor: lesson?.classLevel?.color || "#3b82f6" }}
                     >
-                      {lesson.classLevel.name}
+                      {lesson?.classLevel?.name || "Unnamed Level"}
                     </span>
                     <div className="flex space-x-2">
                       <button
@@ -282,7 +304,7 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
                         }}
                         isDeleting={isDeleting}
                         itemType="lesson"
-                        itemName={lesson.classLevel.name}
+                        itemName={lesson?.classLevel?.name || "Unnamed Level"}
                       />
                     </div>
                   </div>
@@ -310,18 +332,14 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
       {/* Inline Skills Panel */}
       {selectedChild && selectedLesson && (
         <div className="mt-6 bg-white p-6 rounded-lg shadow border" ref={scrollRef}>
-{/* New Section for Lesson Date/Time */}
 <div className="text-xs text-gray-500 font-normal mb-2">
-{format(new Date(selectedLesson.startDate), 'MMMM yyyy')} • {getDayName(selectedLesson.dayOfWeek)}s • {formatTime(selectedLesson.startTime)} - {formatTime(selectedLesson.endTime)}
+            {formatDate(selectedLesson.startDate)} • {getDayName(selectedLesson.dayOfWeek)}s • {formatTime(selectedLesson.startTime)} - {formatTime(selectedLesson.endTime)}
     </div>
 
           <h2 className="text-xl font-semibold mb-2">Skills for {selectedChild.name} ({selectedChild.birthDate
               ? differenceInYears(new Date(), new Date(selectedChild.birthDate))
               : null})</h2>
 
-
-
-           {/* Next Level Indicator */}
     {selectedLesson.readyForNextLevel && (
                       <div className="text-xs text-gray-500 font-normal mb-4"> Ready For 
                       <span className="ml-2 rounded-full px-3 py-1 text-xs font-semibold text-white"
@@ -331,10 +349,6 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
                     </span>
                 </div>
     )}
-
-
-
-
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {selectedLesson.skills?.map((skill) => (
@@ -420,9 +434,9 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
               <div className="font-semibold">Current Lesson:</div>
               <span
                 className="rounded-full px-3 py-1 text-xs font-semibold text-white"
-                style={{ backgroundColor: selectedLesson.classLevel.color || "#3b82f6" }}
+                style={{ backgroundColor: selectedLesson?.classLevel?.color || "#3b82f6" }}
               >
-                {selectedLesson.classLevel.name}
+                {selectedLesson?.classLevel?.name || "Unnamed Level"}
               </span>
               <p className="mt-2 text-xs text-gray-500 font-normal">
                 {getDayName(selectedLesson.dayOfWeek)}s, {formatTime(selectedLesson.startTime)} –{" "}
@@ -490,7 +504,7 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
                 <option value="">Select lesson</option>
                 {filteredLessons.map((l) => (
                   <option key={l.id} value={l.id}>
-                    {l.classLevel.name}, {format(new Date(l.startDate), 'MMMM')} at {formatTime(l.startTime)}
+                    {l.classLevel.name}, {formatDate(l.startDate)} at {formatTime(l.startTime)}
                   </option>
                 ))}
               </select>

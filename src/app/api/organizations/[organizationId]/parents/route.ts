@@ -40,21 +40,33 @@ export async function GET(
         },
         children: {
           include: {
+            child: {
+              include: {
             enrollments: true,
+              },
+            },
           },
         },
       },
     });
 
-    const result = parents.map((parent: ParentWithRelations) => ({
+    const result = parents.map((parent: any) => {
+      const children = parent.children.map((pc: any) => ({
+        id: pc.child.id,
+        name: pc.child.name,
+        birthDate: pc.child.birthDate,
+        enrollments: pc.child.enrollments
+      }));
+      return {
       id: parent.id,
       name: parent.user?.name || "",
       email: parent.user?.email || "",
       phone: parent.user?.phoneNumber || "",
-      childrenCount: parent.children.length,
-      enrollmentsCount: parent.children.reduce((acc: number, child: { enrollments: any[] }) => 
-        acc + child.enrollments.length, 0),
-    }));
+        childrenCount: children.length,
+        enrollmentsCount: children.reduce((acc: number, child: any) => acc + (child?.enrollments?.length || 0), 0),
+        children: children
+      };
+    });
 
     return NextResponse.json(result);
   } catch (error) {

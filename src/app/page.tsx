@@ -10,8 +10,15 @@ async function getChildrenForParent(userId: string) {
   try {
     const parent = await prisma.parent.findFirst({
       where: { userId },
+    });
+    if (!parent) {
+      return [];
+    }
+    // Use the join table to get all children for this parent
+    const parentChildren = await prisma.parentChild.findMany({
+      where: { parentId: parent.id },
       include: {
-        children: {
+        child: {
           include: {
             enrollments: {
               include: {
@@ -24,66 +31,63 @@ async function getChildrenForParent(userId: string) {
                             id: true,
                             name: true,
                             description: true,
-                          }
+                          },
                         },
                       },
                     },
                   },
                 },
-                progress: true
-              }
-            }
-          }
-        }
-      }
+                progress: true,
+              },
+            },
+          },
+        },
+      },
     });
-
-    if (!parent) {
-      return [];
-    }
-
-    return parent.children.map((child: unknown) => {
+    return parentChildren.map((pc: any) => {
+      const child = pc.child;
       return {
-        id: (child as any).id,
-        name: (child as any).name,
-        lessons: (child as any).enrollments.map((enrollment: unknown) => {
-          (enrollment as any).lesson.classLevel.skills = (enrollment as any).lesson.classLevel.skills.map((skill: unknown) => ({
-            id: (skill as any).id,
-            name: (skill as any).name,
-            description: (skill as any).description,
+        id: child.id,
+        name: child.name,
+        lessons: child.enrollments.map((enrollment: any) => {
+          enrollment.lesson.classLevel.skills = enrollment.lesson.classLevel.skills.map((skill: any) => ({
+            id: skill.id,
+            name: skill.name,
+            description: skill.description,
           }));
           // Build skills array by joining with progress
-          const skills = ((enrollment as any).lesson.classLevel.skills as Array<{ id: string; name: string; description?: string }> ).map((skill) => {
-            const progress = (enrollment as any).progress.find((p: unknown) => (p as any).skillId === skill.id);
+          const skills = enrollment.lesson.classLevel.skills.map((skill: any) => {
+            const progress = enrollment.progress.find((p: any) => p.skillId === skill.id);
             return {
             ...skill,
-              status: progress?.status || "NOT_STARTED"
+              status: progress?.status || "NOT_STARTED",
             };
           });
-          const completedSkills = skills.filter((s: unknown) => (s as any).status === "COMPLETED").length;
+          const completedSkills = skills.filter((s: any) => s.status === "COMPLETED").length;
           const progress = skills.length > 0 ? Math.round((completedSkills / skills.length) * 100) : 0;
           return {
-            id: (enrollment as any).lesson.id,
-            name: (enrollment as any).lesson.classLevel.name,
+            id: enrollment.lesson.id,
+            name: enrollment.lesson.classLevel.name,
             progress,
             skills,
             classLevel: {
-              id: (enrollment as any).lesson.classLevel.id,
-              name: (enrollment as any).lesson.classLevel.name,
-              sortOrder: (enrollment as any).lesson.classLevel.sortOrder,
-              color: ((enrollment as any).lesson.classLevel as any).color,
+              id: enrollment.lesson.classLevel.id,
+              name: enrollment.lesson.classLevel.name,
+              sortOrder: enrollment.lesson.classLevel.sortOrder,
+              color: enrollment.lesson.classLevel.color,
             },
-            dayOfWeek: (enrollment as any).lesson.dayOfWeek,
-            startTime: (enrollment as any).lesson.startTime,
-            endTime: (enrollment as any).lesson.endTime,
-            startDate: (enrollment as any).lesson.startDate,
-            endDate: (enrollment as any).lesson.endDate,
-            readyForNextLevel: (enrollment as any).readyForNextLevel,
-            strengthNotes: (enrollment as any).strengthNotes ?? undefined,
-            improvementNotes: (enrollment as any).improvementNotes ?? undefined,
-            enrollmentId: (enrollment as any).id
+            dayOfWeek: enrollment.lesson.dayOfWeek,
+            startTime: enrollment.lesson.startTime,
+            endTime: enrollment.lesson.endTime,
+            startDate: enrollment.lesson.startDate,
+            endDate: enrollment.lesson.endDate,
+            readyForNextLevel: enrollment.readyForNextLevel,
+            strengthNotes: enrollment.strengthNotes ?? undefined,
+            improvementNotes: enrollment.improvementNotes ?? undefined,
+            enrollmentId: enrollment.id,
           };
-        })
+        }),
+        birthDate: child.birthDate,
       };
     });
   } catch (error) {
