@@ -41,19 +41,24 @@ export function LoginForm() {
         redirect: false,
         email: data.email,
         password: data.password,
+        callbackUrl,
       });
 
       if (!result?.ok) {
-        setError("Invalid email or password");
+        setError(result?.error || "Invalid email or password");
         return;
       }
 
-      router.push(callbackUrl);
-      router.refresh();
-    } catch {
+      // Wait a moment before redirecting to ensure the session is set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Use window.location for a full page reload to ensure session is picked up
+      window.location.href = callbackUrl;
+    } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Error",
-        description: "Invalid credentials",
+        description: "An error occurred during sign in",
         variant: "destructive",
       });
     } finally {
@@ -65,22 +70,9 @@ export function LoginForm() {
     e.preventDefault();
     if (forgotPasswordLoading) return;
     
-    console.log("Forgot password clicked");
     try {
       setForgotPasswordLoading(true);
-      console.log("Current URL:", window.location.href);
-      console.log("Attempting navigation...");
-      
-      // Try using router.push with a callback
-      router.push("/forgot-password", { scroll: false });
-      
-      // Force a hard navigation after a short delay
-      setTimeout(() => {
-        console.log("Forcing hard navigation...");
-        window.location.href = "/forgot-password";
-      }, 100);
-      
-      console.log("Navigation initiated");
+      window.location.href = "/forgot-password";
     } catch (error) {
       console.error("Navigation error:", error);
       toast({

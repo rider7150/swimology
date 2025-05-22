@@ -16,6 +16,10 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
   session: {
     strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60, // 7 days
+  },
+  jwt: {
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   pages: {
     signIn: "/login",
@@ -31,8 +35,6 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
-
-        console.log("AUTH: Attempting login for", credentials?.email);
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
@@ -55,10 +57,7 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        console.log("AUTH: User found in DB?", !!user, user);
-
         if (!user) {
-          console.log("AUTH: No user found for", credentials.email);
           return null;
         }
 
@@ -66,8 +65,6 @@ export const authOptions: NextAuthOptions = {
           credentials.password,
           user.password
         );
-
-        console.log("AUTH: Password valid?", isPasswordValid);
 
         if (!isPasswordValid) {
           return null;
@@ -110,9 +107,9 @@ export const authOptions: NextAuthOptions = {
         ...session,
         user: {
           ...session.user,
-          id: token.id,
-          role: token.role,
-          organizationId: token.organizationId,
+          id: token.id as string,
+          role: token.role as string,
+          organizationId: token.organizationId as string | undefined,
         },
       };
     },

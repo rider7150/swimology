@@ -1,46 +1,74 @@
-// src/app/middleware.ts
-export const runtime = 'nodejs';
-
+import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+
+export default withAuth(
+  function middleware(req) {
+    const token = req.nextauth.token;
+    const path = req.nextUrl.pathname;
+
+    // Public routes - no middleware protection
+    if (path === "/" || path === "/login" || path === "/register" || path === "/forgot-password" || path === "/reset-password") {
+      return NextResponse.next();
+    }
+
+    // Protected routes based on role
+    if (path.startsWith("/organizations")) {
+      // Allow access to specific organization routes for ADMIN role
+      if (token?.role === 'ADMIN') {
+        // Extract organization ID from the URL
+        const urlParts = path.split('/');
+        const organizationIdIndex = urlParts.indexOf('organizations') + 1;
+        const urlOrgId = urlParts[organizationIdIndex];
+        
+        // Allow if the admin is accessing their own organization
+        if (urlOrgId === token.organizationId) {
+          return NextResponse.next();
+        }
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+
+      // For the organizations list page, only super admins can access
+      if (path === "/organizations" && token?.role !== 'SUPER_ADMIN') {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+
+      // For specific organization pages
+      if (token?.role !== 'SUPER_ADMIN' && token?.role !== 'ADMIN') {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+    }
+
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const path = req.nextUrl.pathname;
+        // Allow public routes without authentication
+        if (path === "/" || path === "/login" || path === "/register" || path === "/forgot-password" || path === "/reset-password" || path.startsWith('/images/') ) {
+          return true;
+        }
+        // Require authentication for all other routes
+        return !!token;
+      },
+    },
+    pages: {
+      signIn: "/login",
+    },
+  }
+);
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
-};
+  matcher: ["/((?!api/).*)"],
 
-export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  // 0) Allow public images
-  if (pathname.startsWith("/images/")) {
-    return NextResponse.next();
-  }
-
-  // 1) Allow login endpoint
-  if (pathname === "/api/auth/mobile-auth") {
-    return NextResponse.next();
-  }
-
-  // 2) Protect all other API routes via Bearer JWT
-  if (pathname.startsWith("/api/")) {
-    const authHeader = req.headers.get("authorization") ?? "";
-    if (!authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Missing token" }, { status: 401 });
-    }
-    const token = authHeader.split(" ")[1];
-
-    try {
-      // Verify against your NextAuth secret
-      jwt.verify(token, process.env.NEXTAUTH_SECRET!);
-      return NextResponse.next();
-    } catch (err) {
-      console.warn("JWT verify failed:", err);
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-  }
-
-  // 3) Everything else (page routes) — keep your existing redirect logic if any,
-  // or just allow through if you don’t need page protection in this app:
-  return NextResponse.next();
-}
+  // matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (auth endpoints)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    // "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
+  // ],
+}; 

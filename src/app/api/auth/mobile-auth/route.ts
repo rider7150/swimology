@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { comparePasswords } from "@/lib/passwords";
-import jwt from "jsonwebtoken";
+import * as jose from 'jose';
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       id: true,
       email: true,
       role: true,
-      password: true, // 👈 add this line
+      password: true,
       parent: {
         include: { organization: true },
       },
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   }
 
   const valid = await comparePasswords(password, user.password);
-    if (!valid) {
+  if (!valid) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
@@ -49,7 +49,17 @@ export async function POST(req: Request) {
     parentId: user.parent?.id,
   };
 
-  const token = jwt.sign(payload, process.env.NEXTAUTH_SECRET!, { expiresIn: "7d" });
+  // Create a TextEncoder for the secret
+  const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
+
+  // Sign the JWT using jose
+  const token = await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setIssuer('next-auth')
+    .setAudience('authenticated')
+    .setExpirationTime('7d')
+    .sign(secret);
 
   return NextResponse.json({ token, ...payload });
 }

@@ -6,9 +6,15 @@ import { LoginPageContent } from "@/components/auth/login-page";
 import { Toaster } from "@/components/ui/toaster";
 
 export default async function LoginPage() {
-  const session = await getServerSession(authOptions);
+  let session;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    console.error("Session check error:", error);
+  }
 
-  if (session) {
+  // Only redirect if we have a valid session with a user
+  if (session?.user?.id) {
     redirect("/");
   }
 
