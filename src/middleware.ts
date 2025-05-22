@@ -3,7 +3,6 @@ export const runtime = 'nodejs';
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
 import jwt from "jsonwebtoken";
 
 export const config = {
@@ -13,53 +12,35 @@ export const config = {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-    // 0) Passthrough for your public images folder
-    if (pathname.startsWith("/images/")) {
-      return NextResponse.next();
-    }
-    
-  // 1) Always allow your mobile-login endpoint
+  // 0) Allow public images
+  if (pathname.startsWith("/images/")) {
+    return NextResponse.next();
+  }
+
+  // 1) Allow login endpoint
   if (pathname === "/api/auth/mobile-auth") {
     return NextResponse.next();
   }
 
-  // 2) Protect API routes
+  // 2) Protect all other API routes via Bearer JWT
   if (pathname.startsWith("/api/")) {
-    // 2a) Try Bearer JWT first
-    const authHeader = req.headers.get("authorization") || "";
-    if (authHeader.startsWith("Bearer ")) {
-      const token = authHeader.split(" ")[1];
-      try {
-        jwt.verify(token, process.env.NEXTAUTH_SECRET!);
-        return NextResponse.next();
-      } catch (err) {
-        console.log("⚠️ Bearer JWT verify failed:", err);
-        // fall through to NextAuth cookie check
-      }
+    const authHeader = req.headers.get("authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Missing token" }, { status: 401 });
     }
+    const token = authHeader.split(" ")[1];
 
-    // 2b) Fallback to NextAuth session cookie
-    const session = await getToken({ req, secret: process.env.NEXTAUTH_SECRET! });
-    if (session) {
+    try {
+      // Verify against your NextAuth secret
+      jwt.verify(token, process.env.NEXTAUTH_SECRET!);
       return NextResponse.next();
+    } catch (err) {
+      console.warn("JWT verify failed:", err);
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
-
-    // 2c) No valid auth → 401 JSON
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401, statusText: "Unauthorized" }
-    );
   }
 
-  // 3) Protect page routes (redirect to /login)
-  const session = await getToken({ req, secret: process.env.NEXTAUTH_SECRET! });
-  const publicPaths = ["/login", "/register", "/api/auth"];
-  const isPublic = publicPaths.some((path) => pathname.startsWith(path));
-
-  if (!session && !isPublic) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-
-  // 4) Otherwise, allow
+  // 3) Everything else (page routes) — keep your existing redirect logic if any,
+  // or just allow through if you don’t need page protection in this app:
   return NextResponse.next();
 }
