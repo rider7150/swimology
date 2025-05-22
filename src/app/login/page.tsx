@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { LoginPageContent } from "@/components/auth/login-page";
 import { Toaster } from "@/components/ui/toaster";
+import { Suspense } from "react";
 
 export default async function LoginPage() {
   let session;
@@ -31,9 +32,9 @@ export default async function LoginPage() {
   }
 
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
       <LoginPageContent dbStatus={dbStatus} />
       <Toaster />
-    </>
+    </Suspense>
   );
 } 

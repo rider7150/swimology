@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
+
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
@@ -21,8 +22,12 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [callbackUrl, setCallbackUrl] = useState("/");
 
-  const callbackUrl = searchParams?.get("callbackUrl") || "/";
+  useEffect(() => {
+    const url = searchParams?.get("callbackUrl") || "/";
+    setCallbackUrl(url);
+  }, [searchParams]);
 
   const {
     register,
@@ -100,18 +105,16 @@ export function LoginForm() {
         >
           Email address
         </label>
-
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            {...register("email")}
-            className="mt-2"
-          />
-          {errors.email && (
-            <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
-          )}
-
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          {...register("email")}
+          className="mt-2"
+        />
+        {errors.email && (
+          <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+        )}
       </div>
 
       <div>
@@ -121,16 +124,16 @@ export function LoginForm() {
         >
           Password
         </label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            {...register("password")}
-            className="mt-2"
-          />
-          {errors.password && (
-            <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
-          )}
+        <Input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          {...register("password")}
+          className="mt-2"
+        />
+        {errors.password && (
+          <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
+        )}
       </div>
 
       <div className="flex items-center justify-between">
