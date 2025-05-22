@@ -232,17 +232,17 @@ export default function OrganizationParentsPage({
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => setEditingParent(p)}
-                          className="inline-flex items-center justify-center h-8 w-8 rounded hover:bg-indigo-50"
+                          className="inline-flex items-center justify-center rounded px-2 hover:text-indigo-600 text-indigo-300"
                           aria-label="Edit"
                         >
-                          <Pencil className="h-5 w-5 text-indigo-600" />
+                          <Pencil className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => setDeletingParent(p)}
-                          className="inline-flex items-center justify-center h-8 w-8 rounded hover:bg-red-50"
+                          className="inline-flex items-center justify-center rounded px-2 hover:text-red-600 text-indigo-300"
                           aria-label="Delete"
                         >
-                          <Trash2 className="h-5 w-5 text-red-600" />
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
                     </td>

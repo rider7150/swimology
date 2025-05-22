@@ -116,7 +116,7 @@ export function AdminsTable({ organizationId }: AdminsTableProps) {
                       admin={admin}
                       onAdminUpdated={fetchAdmins}
                       trigger={
-                          <Button variant="ghost" size="icon" className="text-indigo-300 hover:text-indigo-600r">
+                          <Button variant="ghost" size="icon" className="text-indigo-300 hover:text-indigo-600">
                           <PencilIcon className="h-5 w-5" />
                           </Button>
                       }

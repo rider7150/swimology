@@ -148,13 +148,14 @@ export function ParentChildren({ parentId, organizationId }: ParentChildrenProps
         l => l.instructor.user.name === selectedInstructor
       );
       setFilteredLessons(instructorLessons);
-      
+      /*
       // Get unique days for this instructor
       const availableDays = [...new Set(
         instructorLessons.map(l => getDayName(l.dayOfWeek))
       )];
       setSelectedDay(availableDays[0] || ""); // Select first available day by default
-    } else {
+*/
+      } else {
       setFilteredLessons([]);
       setSelectedDay("");
     }
@@ -388,6 +389,7 @@ export function ParentChildren({ parentId, organizationId }: ParentChildrenProps
                         onChange={e => setSelectedDay(e.target.value)}
                         className="mt-1 block w-full border rounded p-2"
                       >
+                        <option value="">Select a day</option>
                         {[...new Set(filteredLessons.map(l => getDayName(l.dayOfWeek)))].map(day => (
                           <option key={day} value={day}>{day}</option>
                         ))}
@@ -407,6 +409,7 @@ export function ParentChildren({ parentId, organizationId }: ParentChildrenProps
                         onChange={(e) => setNewChild(prev => ({ ...prev, lessonId: e.target.value }))}
                         className="mt-1 block w-full border rounded p-2"
                       >
+                        <option value="">Select a lesson</option>
                         {filteredByDayLessons.map(l => (
                           <option key={l.id} value={l.id}>
                             {l.classLevel.name}, {format(new Date(l.startDate),'MMMM')}, {formatTime(l.startTime)} – {formatTime(l.endTime)}
@@ -496,7 +499,7 @@ export function ParentChildren({ parentId, organizationId }: ParentChildrenProps
                 setChildToRemove(child);
                 setIsRemoveDialogOpen(true);
               }}
-              className="text-gray-500 hover:text-red-600 hover:bg-red-50"
+              className="text-indigo-300 hover:text-red-600"
             >
               <UserMinusIcon className="h-5 w-5" />
               <span className="sr-only">Remove from parent</span>
