@@ -13,25 +13,28 @@ export const config = {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 1) Login endpoint: always allow
+    // 0) Passthrough for your public images folder
+    if (pathname.startsWith("/images/")) {
+      return NextResponse.next();
+    }
+    
+  // 1) Always allow your mobile-login endpoint
   if (pathname === "/api/auth/mobile-auth") {
     return NextResponse.next();
   }
 
-  // 2) API routes: try header JWT first, then NextAuth session
+  // 2) Protect API routes
   if (pathname.startsWith("/api/")) {
-    // 2a) Check for Bearer token in Authorization header
+    // 2a) Try Bearer JWT first
     const authHeader = req.headers.get("authorization") || "";
     if (authHeader.startsWith("Bearer ")) {
       const token = authHeader.split(" ")[1];
       try {
         jwt.verify(token, process.env.NEXTAUTH_SECRET!);
         return NextResponse.next();
-      } catch {
-        return NextResponse.json(
-          { error: "Invalid token" },
-          { status: 401 }
-        );
+      } catch (err) {
+        console.log("⚠️ Bearer JWT verify failed:", err);
+        // fall through to NextAuth cookie check
       }
     }
 
@@ -41,22 +44,22 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // 2c) Otherwise, unauthorized
+    // 2c) No valid auth → 401 JSON
     return NextResponse.json(
       { error: "Unauthorized" },
-      { status: 401 }
+      { status: 401, statusText: "Unauthorized" }
     );
   }
 
-  // 3) Page routes: your existing redirect logic
+  // 3) Protect page routes (redirect to /login)
   const session = await getToken({ req, secret: process.env.NEXTAUTH_SECRET! });
   const publicPaths = ["/login", "/register", "/api/auth"];
   const isPublic = publicPaths.some((path) => pathname.startsWith(path));
 
   if (!session && !isPublic) {
-    const loginUrl = new URL("/login", req.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  // 4) Otherwise, allow
   return NextResponse.next();
 }
