@@ -77,7 +77,7 @@ export function LoginForm() {
     
     try {
       setForgotPasswordLoading(true);
-      window.location.href = "/forgot-password";
+        window.location.href = "/forgot-password";
     } catch (error) {
       console.error("Navigation error:", error);
       toast({
@@ -105,16 +105,16 @@ export function LoginForm() {
         >
           Email address
         </label>
-        <Input
-          id="email"
-          type="email"
-          autoComplete="email"
-          {...register("email")}
-          className="mt-2"
-        />
-        {errors.email && (
-          <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
-        )}
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            {...register("email")}
+            className="mt-2"
+          />
+          {errors.email && (
+            <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+          )}
       </div>
 
       <div>
@@ -124,16 +124,16 @@ export function LoginForm() {
         >
           Password
         </label>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          {...register("password")}
-          className="mt-2"
-        />
-        {errors.password && (
-          <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
-        )}
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            {...register("password")}
+            className="mt-2"
+          />
+          {errors.password && (
+            <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
+          )}
       </div>
 
       <div className="flex items-center justify-between">

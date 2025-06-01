@@ -76,9 +76,11 @@ export async function POST(
     // Create start and end time DateTime objects
     const startTime = new Date(validatedData.year, validatedData.month - 1, 1);
     startTime.setHours(startHours, startMinutes, 0, 0);
+    console.log('Start time:', startTime);
 
     const endTime = new Date(validatedData.year, validatedData.month - 1, 1);
     endTime.setHours(endHours, endMinutes, 0, 0);
+    console.log('End time:', endTime);
 
     const lesson = await prisma.lesson.create({
       data: {

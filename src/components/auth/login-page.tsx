@@ -13,11 +13,11 @@ export function LoginPageContent({ dbStatus }: LoginPageProps) {
 
   useEffect(() => {
     if (dbStatus) {
-      toast({
-        title: "Database Status",
-        description: dbStatus,
-        duration: 3000, // 3 seconds
-      });
+    toast({
+      title: "Database Status",
+      description: dbStatus,
+      duration: 3000, // 3 seconds
+    });
     }
   }, [dbStatus, toast]);
 

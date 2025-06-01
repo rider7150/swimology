@@ -80,6 +80,16 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
+  // Add filter state for Active/All
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const [lessonFilter, setLessonFilter] = useState<'active' | 'all'>('active');
+
+  // Add success message state
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
   // Fetch & refresh children every 30s
   const refreshChildren = async () => {
     try {
@@ -227,9 +237,25 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
   };
 
   // Flatten & sort
-  const flatLessons = children
+  const allFlatLessons = children
     .flatMap((c) => c.lessons.map((l) => ({ child: c, ...l })))
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+
+  // Filter lessons for Active/All
+  const flatLessons = lessonFilter === 'active'
+    ? allFlatLessons.filter(lesson => {
+        if (!lesson.startTime) return false;
+        let lessonDate;
+        try {
+          lessonDate = new Date(lesson.startTime);
+        } catch {
+          return false;
+        }
+        if (isNaN(lessonDate.getTime())) return false;
+        // Use UTC to avoid timezone issues
+        return lessonDate.getUTCFullYear() === currentYear && (lessonDate.getUTCMonth() + 1) === currentMonth;
+      })
+    : allFlatLessons;
 
   return (
     <div className="space-y-6">
@@ -242,6 +268,32 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Add Child
+        </button>
+      </div>
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent>
+          <DialogTitle>Success</DialogTitle>
+          <p>{successMessage}</p>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setShowSuccessDialog(false)}>Acknowledge</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Filter below the title for better responsive display */}
+      <div className="flex gap-2 items-center mb-4">
+        <label className="text-sm font-medium">Show:</label>
+        <button
+          className={`px-2 py-1 rounded ${lessonFilter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+          onClick={() => setLessonFilter('active')}
+        >
+          Active
+        </button>
+        <button
+          className={`px-2 py-1 rounded ${lessonFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+          onClick={() => setLessonFilter('all')}
+        >
+          All
         </button>
       </div>
 
@@ -413,8 +465,10 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <AddChildForm
-              onSuccess={() => {
+              onSuccess={(childName, instructorName) => {
                 setIsAddingChild(false);
+                setSuccessMessage(`Your child, ${childName}, has been added successfully. Please let ${instructorName} know ${childName} has been added.`);
+                setShowSuccessDialog(true);
                 refreshChildren();
               }}
               onCancel={() => setIsAddingChild(false)}

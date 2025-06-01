@@ -427,19 +427,63 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
     }
   };
 
+  // Add filter state for Active/All
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const [studentFilter, setStudentFilter] = useState<'active' | 'all'>('active');
+
+  // Filter lessons for Active/All
+  const filteredLessons = studentFilter === 'active'
+    ? lessons.filter(lesson => {
+        if (!lesson.startTime) return false;
+        let lessonDate;
+        try {
+          lessonDate = new Date(lesson.startTime);
+        } catch {
+          return false;
+        }
+        if (isNaN(lessonDate.getTime())) return false;
+        // Use UTC to avoid timezone issues
+        return lessonDate.getUTCFullYear() === currentYear && (lessonDate.getUTCMonth() + 1) === currentMonth;
+      })
+    : lessons;
+
+  // Debug: log lessons if filtered list is empty
+  if (studentFilter === 'active' && filteredLessons.length === 0 && lessons.length > 0) {
+    // eslint-disable-next-line no-console
+    console.log('DEBUG: lessons after refresh', lessons);
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Instructor Dashboard</h1>
       </div>
+      {/* Filter below the title for better responsive display */}
+      <div className="flex gap-2 items-center mb-4">
+        <label className="text-sm font-medium">Show:</label>
+        <button
+          className={`px-2 py-1 rounded ${studentFilter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+          onClick={() => setStudentFilter('active')}
+        >
+          Active
+        </button>
+        <button
+          className={`px-2 py-1 rounded ${studentFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+          onClick={() => setStudentFilter('all')}
+        >
+          All
+        </button>
+      </div>
 
       {/* Cards Grid */}
-      {lessons.length === 0 ? (
+      {filteredLessons.length === 0 ? (
         <p className="text-gray-500">No lessons found.</p>
       ) : (
         <div className="bg-gray-50 p-4 rounded-lg grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {lessons.map((lesson) => (
+          {filteredLessons.map((lesson) => (
             lesson.students && lesson.students.length > 0 && lesson.students.map((student) => {
               const personalizedLesson = {
                 ...lesson,

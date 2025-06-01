@@ -34,7 +34,7 @@ const addChildSchema = z.object({
 type AddChildData = z.infer<typeof addChildSchema>;
 
 interface AddChildFormProps {
-  onSuccess: () => void;
+  onSuccess: (childName: string, instructorName: string) => void;
   onCancel: () => void;
 }
 
@@ -125,7 +125,13 @@ export function AddChildForm({ onSuccess, onCancel }: AddChildFormProps) {
         const err = await res.json();
         throw new Error(err.error || "Failed to add child");
       }
-      onSuccess();
+      // Find instructor name from selected lesson
+      let instructorName = "";
+      const lesson = lessons.find(l => l.id === data.lessonId);
+      if (lesson) {
+        instructorName = lesson.instructor.user.name;
+      }
+      onSuccess(data.name, instructorName);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
