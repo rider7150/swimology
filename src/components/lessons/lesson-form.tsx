@@ -185,7 +185,9 @@ export function LessonForm({
       // Ensure times are in correct format
       const startTime = parseTimeInput(values.startTime);
       const endTime = parseTimeInput(values.endTime);
-      
+      console.log('Start time:', startTime);
+      console.log('End time:', endTime);
+
       if (!startTime || !endTime) {
         throw new Error("Invalid time format. Please use HH:mm format.");
       }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, PencilIcon, TrashIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
 import { EditInstructorDialog } from "./edit-instructor-dialog";
@@ -53,6 +53,11 @@ const days = [
   "Thursday", "Friday", "Saturday"
 ];
 
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 function formatTime(t: string) {
     let date: Date;
     // if it looks like a full ISO string, parse directly…
@@ -82,6 +87,11 @@ export function InstructorList({
   const [selected, setSelected] = useState<Instructor | null>(null);
   const [loading, setLoading] = useState(false);
   const [instructors, setInstructors] = useState(initialInstructors);
+  const [cloneLesson, setCloneLesson] = useState<Lesson | null>(null);
+  // Filter state
+  const now = new Date();
+  const [filterYear, setFilterYear] = useState<string>(String(now.getFullYear()));
+  const [filterMonth, setFilterMonth] = useState<string>(String(now.getMonth() + 1));
 
   // Update local state when props change
   useEffect(() => {
@@ -128,6 +138,21 @@ export function InstructorList({
       console.error('Error refreshing instructors:', error);
     }
   };
+
+  // Get all years and months from lessons for filter dropdowns
+  const allLessons = selected ? selected.lessons : [];
+  const uniqueYears = Array.from(new Set(allLessons.map(l => l.year))).sort();
+  const uniqueMonths = Array.from(new Set(allLessons.map(l => l.month))).sort((a, b) => a - b);
+
+  // Filter and sort lessons
+  let filteredLessons = allLessons;
+  if (filterYear) filteredLessons = filteredLessons.filter(l => l.year === Number(filterYear));
+  if (filterMonth) filteredLessons = filteredLessons.filter(l => l.month === Number(filterMonth));
+  filteredLessons = filteredLessons.slice().sort((a, b) => {
+    if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
+    // Compare startTime as time strings (HH:mm)
+    return a.startTime.localeCompare(b.startTime);
+  });
 
   return (
     <div className="space-y-6">
@@ -220,67 +245,131 @@ export function InstructorList({
                 onSuccess={refreshInstructors}
               />
             </div>
-          <table className="w-full table-auto divide-y divide-gray-200 mt-4">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                  Lesson
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                  Day &amp; Time
-                </th>
-                <th className="px-6 py-3 text-right text-sm font-medium text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {selected.lessons.map((lesson) => (
-                <tr key={lesson.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {lesson.classLevel.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {days[lesson.dayOfWeek]} at{" "}
-                    {formatTime(lesson.startTime)}–{formatTime(lesson.endTime)}
-                  </td>
-                  <td className="px-6 py-4 text-right text-sm flex justify-end space-x-2">
-                    <EditLessonDialog
-                      organizationId={organizationId}
-                      classLevels={classLevels}
-                      instructors={instructors.map((i) => ({
-                        id: i.id,
-                        user: { name: i.user.name ?? "Unnamed", email: i.user.email },
-                      }))}
-                      lesson={{
-                        id: lesson.id,
-                        classLevelId: lesson.classLevelId,
-                        instructorId: selected.id,
-                        month: lesson.month,
-                        year: lesson.year,
-                        dayOfWeek: lesson.dayOfWeek,
-                        startTime: lesson.startTime,
-                        endTime: lesson.endTime,
-                      }}
-                      onSuccess={refreshInstructors}
-                    />
-
-                    <DeleteConfirmationDialog
-                      onDelete={async () => {
-                        await handleDeleteLesson(lesson.id);
-                        refreshInstructors();
-                      }}
-                      isDeleting={loading}
-                      itemType="lesson"
-                      itemName={selected.user.name ?? "Lesson"}
-                    />
-                  </td>
+            {/* Filter controls */}
+            <div className="flex gap-4 px-6 pt-2 pb-2">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Year</label>
+                <select
+                  className="border rounded px-2 py-1 text-sm"
+                  value={filterYear}
+                  onChange={e => setFilterYear(e.target.value)}
+                >
+                  <option value="">All</option>
+                  {uniqueYears.map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Month</label>
+                <select
+                  className="border rounded px-2 py-1 text-sm"
+                  value={filterMonth}
+                  onChange={e => setFilterMonth(e.target.value)}
+                >
+                  <option value="">All</option>
+                  {uniqueMonths.map(m => (
+                    <option key={m} value={m}>{months[m - 1]}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <table className="w-full table-auto divide-y divide-gray-200 mt-4">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+                    Lesson
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+                    Day &amp; Time
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-700">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredLessons.map((lesson) => (
+                  <tr key={lesson.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {lesson.classLevel.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {months[lesson.month - 1]} {lesson.year}, {days[lesson.dayOfWeek]} at {formatTime(lesson.startTime)}–{formatTime(lesson.endTime)}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm flex justify-end space-x-2">
+                      <EditLessonDialog
+                        organizationId={organizationId}
+                        classLevels={classLevels}
+                        instructors={instructors.map((i) => ({
+                          id: i.id,
+                          user: { name: i.user.name ?? "Unnamed", email: i.user.email },
+                        }))}
+                        lesson={{
+                          id: lesson.id,
+                          classLevelId: lesson.classLevelId,
+                          instructorId: selected.id,
+                          month: lesson.month,
+                          year: lesson.year,
+                          dayOfWeek: lesson.dayOfWeek,
+                          startTime: lesson.startTime,
+                          endTime: lesson.endTime,
+                        }}
+                        onSuccess={refreshInstructors}
+                      />
+                      {/* Clone Button */}
+                      <button
+                        type="button"
+                        className="p-2 rounded text-indigo-400 hover:text-indigo-600"
+                        title="Clone Lesson"
+                        onClick={() => setCloneLesson(lesson)}
+                      >
+                        <DocumentDuplicateIcon className="h-5 w-5" />
+                      </button>
+                      <DeleteConfirmationDialog
+                        onDelete={async () => {
+                          await handleDeleteLesson(lesson.id);
+                          refreshInstructors();
+                        }}
+                        isDeleting={loading}
+                        itemType="lesson"
+                        itemName={selected.user.name ?? "Lesson"}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* Clone Lesson Dialog */}
+            {cloneLesson && (
+              <AddLessonDialog
+                organizationId={organizationId}
+                classLevels={classLevels}
+                instructors={instructors.map(i => ({
+                  id: i.id,
+                  user: { name: i.user.name ?? 'Unnamed', email: i.user.email }
+                }))}
+                onSuccess={() => {
+                  setCloneLesson(null);
+                  refreshInstructors();
+                }}
+                initialData={{
+                  classLevelId: cloneLesson.classLevelId,
+                  instructorId: selected.id,
+                  month: cloneLesson.month,
+                  year: cloneLesson.year,
+                  dayOfWeek: cloneLesson.dayOfWeek,
+                  startTime: cloneLesson.startTime,
+                  endTime: cloneLesson.endTime,
+                }}
+                open={!!cloneLesson}
+                onOpenChange={(open) => {
+                  if (!open) setCloneLesson(null);
+                }}
+              />
+            )}
+          </div>
+        )}
     </div>
   );
 }
