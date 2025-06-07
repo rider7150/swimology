@@ -223,6 +223,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
+    console.log("Children GET request received");
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(

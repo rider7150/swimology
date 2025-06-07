@@ -35,15 +35,34 @@ export function AddAdminDialog({ organizationId, onAdminAdded }: AddAdminDialogP
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to add admin");
-      }
+        const errorData = await response.json(); // Rename 'error' to 'errorData' for clarity
 
+        let errorMessage = "Failed to add admin"; // Default error message
+
+        // Handle specific error structures from backend
+        if (typeof errorData.error === 'string') {
+          // Case 1: Backend sends { error: "Email already exists" } or generic 500 { error: "..." }
+          errorMessage = errorData.error;
+
+          console.log("Error message from backend:", errorMessage); // <--- ADD THIS
+        } else if (Array.isArray(errorData.error) && errorData.error.length > 0) {
+          // Case 2: Backend sends Zod errors { error: [{ message: "...", path: "..." }] }
+          // We can join Zod error messages or pick the first one
+          errorMessage = errorData.error.map((err: any) => err.message).join(', ');
+        } else if (errorData.message) { // Fallback for any other 'message' field
+            errorMessage = errorData.message;
+        }
+        console.log("Throwing new Error with message:", errorMessage); // <--- ADD THIS
+
+        throw new Error(errorMessage);
+      }
       toast.success("Admin added successfully");
       setOpen(false);
       setFormData({ name: "", email: "", password: "" });
       onAdminAdded();
     } catch (error) {
+      console.error("Caught error in handleSubmit:", error); // <--- ADD THIS
+
       toast.error(error instanceof Error ? error.message : "Failed to add admin");
     } finally {
       setLoading(false);

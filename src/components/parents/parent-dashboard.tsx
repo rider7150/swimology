@@ -367,11 +367,19 @@ export default function ParentDashboard({ children: initialChildren }: ParentDas
                   </div>
                   <div>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-600 transition-all" style={{ width: `${lesson.progress || 0}%` }} />
+                      <div
+                        className="h-full bg-blue-600 transition-all"
+                        style={{
+                          width: `${
+                            lesson.skills && lesson.skills.length > 0
+                              ? (lesson.skills.filter((s) => s.status === "COMPLETED").length / lesson.skills.length) * 100
+                              : 0
+                          }%`
+                        }}
+                      />
                     </div>
                     <p className="text-xs text-gray-500 text-right mt-1">
-                      {(lesson.skills?.filter((s) => s.status === "COMPLETED").length || 0)} of{" "}
-                      {(lesson.skills?.length || 0)} skills completed
+                      {(lesson.skills?.filter((s) => s.status === "COMPLETED").length || 0)} of { (lesson.skills?.length || 0)} skills completed
                     </p>
                   </div>
                 </div>

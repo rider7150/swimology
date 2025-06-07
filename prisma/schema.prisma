@@ -98,6 +98,7 @@ model Parent {
   children       ParentChild[]
   organization   Organization @relation(fields: [organizationId], references: [id])
   user           User         @relation(fields: [userId], references: [id])
+  notifications  Notification[]
 }
 
 model ParentChild {
@@ -120,6 +121,7 @@ model Child {
   updatedAt   DateTime     @updatedAt
   parents     ParentChild[]
   enrollments Enrollment[]
+  notifications Notification[]
 }
 
 model ClassLevel {
@@ -211,6 +213,17 @@ model GoogleAccount {
   color         String   // Hex color code for this account
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  parentId  String
+  childId   String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  parent    Parent   @relation(fields: [parentId], references: [id])
+  child     Child?   @relation(fields: [childId], references: [id])
 }
 
 enum UserRole {

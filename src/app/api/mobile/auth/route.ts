@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     select: {
       id: true,
       email: true,
+      name: true,
       role: true,
       password: true,
       parent: {
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
   const payload = {
     id: user.id,
     email: user.email,
+    name: user.name,
     role: user.role,
     organizationId: user.parent?.organizationId || user.admin?.organizationId || user.instructor?.organizationId,
     parentId: user.parent?.id,

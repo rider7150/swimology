@@ -24,11 +24,12 @@ export async function GET(
         },
       },
     });
+    //console.log("parent", parent);  
 
     if (!parent) {
       return NextResponse.json({ error: "Parent not found" }, { status: 404 });
     }
-
+//    console.log(parent);
     const children = parent.children.map((pc) => ({
       id: pc.child.id,
       name: pc.child.name,
@@ -110,58 +111,22 @@ export async function POST(
 // Remove a child from a parent
 export async function DELETE(
   request: Request,
-  { params }: { params: { parentId: string } }
+  { params }: { params: { parentId: string, childId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { childId } = await request.json();
-
-    // Find the parent-child relationship
-    const parentChild = await prisma.parentChild.findFirst({
+    const { parentId, childId } = params;
+    // Remove only the ParentChild association, not the child itself
+    await prisma.parentChild.delete({
       where: {
-        parentId: params.parentId,
-        childId,
-      },
-      include: {
-        child: {
-          include: {
-            parents: true,
-          },
+        parentId_childId: {
+          parentId,
+          childId,
         },
       },
     });
-
-    if (!parentChild) {
-      return NextResponse.json(
-        { error: "Child not found for this parent" },
-        { status: 404 }
-      );
-    }
-
-    // If this is the only parent for the child, delete the child
-    if (parentChild.child.parents.length === 1) {
-      await prisma.child.delete({
-        where: { id: childId },
-      });
-    } else {
-      // Otherwise, just remove the relationship
-      await prisma.parentChild.delete({
-        where: {
-          id: parentChild.id,
-        },
-      });
-    }
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ message: "Parent-child association removed." });
   } catch (error) {
-    console.error("Error removing child:", error);
-    return NextResponse.json(
-      { error: "Failed to remove child" },
-      { status: 500 }
-    );
+    console.error("Error removing parent-child association:", error);
+    return NextResponse.json({ error: "Failed to remove parent-child association" }, { status: 500 });
   }
 } 

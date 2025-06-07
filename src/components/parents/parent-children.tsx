@@ -262,10 +262,9 @@ export function ParentChildren({ parentId, organizationId }: ParentChildrenProps
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/parents/${parentId}/children`, {
+      // Use the new RESTful DELETE endpoint
+      const response = await fetch(`/api/parents/${parentId}/children/${childToRemove.id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ childId: childToRemove.id }),
       });
 
       if (!response.ok) throw new Error("Failed to remove child");
