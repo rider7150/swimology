@@ -72,58 +72,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Find all parents for this child
-    const childId = enrollment.childId;
-    const parentLinks = await prisma.parentChild.findMany({
-      where: { childId },
-      select: { parentId: true }
-    });
-
-    // Get the child's name
-    const child = await prisma.child.findUnique({
-      where: { id: childId }
-    });
-
-    const message = `Progress for "${child?.name ?? 'a child'}" has been updated.`;
-
-    // Check for existing notifications in the last 5 minutes for each parent-child combination
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    
-    // Process each parent sequentially to avoid race conditions
-    for (const link of parentLinks) {
-      // Use a transaction to ensure atomicity
-      await prisma.$transaction(async (tx) => {
-        const existingNotification = await tx.notification.findFirst({
-          where: {
-            childId,
-            parentId: link.parentId,
-            createdAt: {
-              gte: fiveMinutesAgo
-            }
-          }
-        });
-
-        console.log(`Checking notifications for parent ${link.parentId} and child ${childId}:`, {
-          hasExisting: !!existingNotification,
-          timeWindow: fiveMinutesAgo
-        });
-
-        if (!existingNotification) {
-          await tx.notification.create({
-            data: {
-              parentId: link.parentId,
-              childId,
-              message,
-              read: false,
-            }
-          });
-          console.log(`Created notification for parent ${link.parentId} and child ${childId}`);
-        } else {
-          console.log(`Skipping notification for parent ${link.parentId} and child ${childId} - already exists`);
-        }
-      });
-    }
-
     return NextResponse.json(progress);
   } catch (error) {
     console.error("Error updating skill progress:", error);

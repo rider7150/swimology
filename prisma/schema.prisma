@@ -99,6 +99,7 @@ model Parent {
   organization   Organization @relation(fields: [organizationId], references: [id])
   user           User         @relation(fields: [userId], references: [id])
   notifications  Notification[]
+  deviceTokens   DeviceToken[]
 }
 
 model ParentChild {
@@ -224,6 +225,19 @@ model Notification {
   createdAt DateTime @default(now())
   parent    Parent   @relation(fields: [parentId], references: [id])
   child     Child?   @relation(fields: [childId], references: [id])
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  parentId  String
+  token     String   @unique
+  deviceId  String
+  platform  String   @default("ios")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  parent    Parent   @relation(fields: [parentId], references: [id])
+
+  @@unique([parentId, deviceId])
 }
 
 enum UserRole {

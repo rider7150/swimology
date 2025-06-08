@@ -344,14 +344,37 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
           variant: "destructive",
         });
       } else {
-      // Refresh data
-      await refreshLessons();
+        // Create a notification for the student's parent(s)
+        const childId = selectedStudent.id;
+        
+        // Fetch parent links for this child
+        const parentResponse = await fetch(`/api/children/${childId}/parents`);
+        if (parentResponse.ok) {
+          const parents = await parentResponse.json();
+          const message = `Progress for ${selectedStudent.name} has been updated.`;
+          
+          // Create a notification for each parent
+          for (const parent of parents) {
+            await fetch("/api/notifications", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                parentId: parent.id,
+                childId: childId,
+                message: message,
+              }),
+            });
+          }
+        }
+        
+        // Refresh data
+        await refreshLessons();
         setSelectedStudent(null);
         setSelectedLesson(null);
-      toast({
-        title: "Success",
-        description: "All changes saved successfully",
-      });
+        toast({
+          title: "Success",
+          description: "All changes saved successfully",
+        });
       }
     } catch (error) {
       console.error("Error saving changes:", error);
