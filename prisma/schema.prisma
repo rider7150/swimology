@@ -228,16 +228,15 @@ model Notification {
 }
 
 model DeviceToken {
-  id        String   @id @default(cuid())
-  parentId  String
-  token     String   @unique
-  deviceId  String
-  platform  String   @default("ios")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  parent    Parent   @relation(fields: [parentId], references: [id])
+  id          String   @id @default(cuid())
+  parentId    String
+  deviceToken String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  parent      Parent   @relation(fields: [parentId], references: [id])
 
-  @@unique([parentId, deviceId])
+  @@unique([deviceToken])
+  @@index([parentId])
 }
 
 enum UserRole {

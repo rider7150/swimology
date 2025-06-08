@@ -282,7 +282,12 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
   };
 
   const handleSave = async () => {
-    if (!selectedStudent || !selectedEnrollment) return;
+    console.log("[INSTRUCTOR_DASHBOARD] handleSave called");
+    if (!selectedStudent || !selectedEnrollment) {
+      console.log("[INSTRUCTOR_DASHBOARD] No student or enrollment selected");
+      return;
+    }
+    console.log("[INSTRUCTOR_DASHBOARD] Starting save process for student:", selectedStudent.id);
     setUpdatingSkill(true);
 
     try {
@@ -348,14 +353,17 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
         const childId = selectedStudent.id;
         
         // Fetch parent links for this child
+        console.log("[INSTRUCTOR_DASHBOARD] Fetching parents for child:", childId);
         const parentResponse = await fetch(`/api/children/${childId}/parents`);
         if (parentResponse.ok) {
           const parents = await parentResponse.json();
+          console.log("[INSTRUCTOR_DASHBOARD] Found parents:", parents);
           const message = `Progress for ${selectedStudent.name} has been updated.`;
           
           // Create a notification for each parent
           for (const parent of parents) {
-            await fetch("/api/notifications", {
+            console.log("[INSTRUCTOR_DASHBOARD] Creating notification for parent:", parent.id);
+            const notificationResponse = await fetch("/api/notifications", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -364,7 +372,15 @@ export function InstructorDashboard({ lessons: initialLessons }: InstructorDashb
                 message: message,
               }),
             });
+            
+            if (!notificationResponse.ok) {
+              console.error("[INSTRUCTOR_DASHBOARD] Failed to create notification:", await notificationResponse.text());
+            } else {
+              console.log("[INSTRUCTOR_DASHBOARD] Successfully created notification");
+            }
           }
+        } else {
+          console.error("[INSTRUCTOR_DASHBOARD] Failed to fetch parents:", await parentResponse.text());
         }
         
         // Refresh data

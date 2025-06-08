@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Push Notification Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .response {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      overflow: auto;
+      max-height: 300px;
+    }
+    .error {
+      color: red;
+    }
+    .success {
+      color: green;
+    }
+    .help-text {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: -10px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Notification Testing Tool</h1>
+  <p>Use this tool to test that notifications and push notifications are working correctly.</p>
+  
+  <div class="container">
+    <h2>Send Test Notification</h2>
+    <div>
+      <label for="parentId">Parent ID:</label>
+      <input type="text" id="parentId" placeholder="Parent ID">
+      <p class="help-text">Required. The ID of the parent who should receive the notification.</p>
+    </div>
+    <div>
+      <label for="childId">Child ID (optional):</label>
+      <input type="text" id="childId" placeholder="Child ID">
+      <p class="help-text">Optional. The ID of the child the notification is about.</p>
+    </div>
+    <div>
+      <label for="message">Notification Message:</label>
+      <textarea id="message" rows="3" placeholder="Enter notification message"></textarea>
+      <p class="help-text">Required. The text of the notification.</p>
+    </div>
+    <div>
+      <label for="deviceToken">Device Token (for direct push):</label>
+      <textarea id="deviceToken" rows="3" placeholder="iOS device token"></textarea>
+      <p class="help-text">Optional. If provided, a push notification will be sent directly to this device.</p>
+    </div>
+    <button id="sendButton" onclick="sendTestNotification()">Send Notification</button>
+    <div id="response" class="response"></div>
+  </div>
+  
+  <div class="container">
+    <h2>Check Environment Variables</h2>
+    <p>These environment variables are needed for push notifications to work:</p>
+    <ul>
+      <li>APNS_KEY_ID - Your Apple Push Notification Service key ID</li>
+      <li>APNS_TEAM_ID - Your Apple Developer Team ID</li>
+      <li>APNS_BUNDLE_ID - Your app's bundle identifier</li>
+    </ul>
+    <button onclick="checkEnvironment()">Check Environment</button>
+    <div id="envResponse" class="response"></div>
+  </div>
+
+  <script>
+    async function sendTestNotification() {
+      const responseElement = document.getElementById('response');
+      const button = document.getElementById('sendButton');
+      
+      responseElement.innerHTML = 'Sending notification...';
+      button.disabled = true;
+      
+      try {
+        const parentId = document.getElementById('parentId').value;
+        const childId = document.getElementById('childId').value;
+        const message = document.getElementById('message').value;
+        const deviceToken = document.getElementById('deviceToken').value;
+        
+        if (!parentId || !message) {
+          throw new Error('Parent ID and message are required');
+        }
+        
+        const response = await fetch('/api/test-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            parentId,
+            childId: childId || null,
+            message,
+            deviceToken: deviceToken || null
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to send notification');
+        }
+        
+        // Format the response
+        let resultHtml = '<div class="success">✅ Notification created successfully in database</div>';
+        
+        if (deviceToken) {
+          if (data.pushNotification && data.pushNotification.sent) {
+            if (data.pushNotification.result.successful > 0) {
+              resultHtml += '<div class="success">✅ Push notification sent successfully</div>';
+            } else {
+              resultHtml += '<div class="error">❌ Push notification failed to send</div>';
+            }
+          } else {
+            resultHtml += '<div class="error">❌ Push notification was not sent</div>';
+          }
+        } else {
+          resultHtml += '<div>ℹ️ No device token provided, push notification not attempted</div>';
+        }
+        
+        resultHtml += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        responseElement.innerHTML = resultHtml;
+      } catch (error) {
+        responseElement.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        console.error('Error sending test notification:', error);
+      } finally {
+        button.disabled = false;
+      }
+    }
+    
+    async function checkEnvironment() {
+      const responseElement = document.getElementById('envResponse');
+      responseElement.innerHTML = 'Checking environment...';
+      
+      try {
+        const response = await fetch('/api/check-env');
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to check environment');
+        }
+        
+        // Format the response
+        let resultHtml = '<h3>Environment Variables</h3>';
+        resultHtml += '<ul>';
+        
+        if (data.APNS_KEY_ID) {
+          resultHtml += `<li class="success">✅ APNS_KEY_ID: ${data.APNS_KEY_ID ? 'Set' : 'Not set'}</li>`;
+        } else {
+          resultHtml += `<li class="error">❌ APNS_KEY_ID: Not set</li>`;
+        }
+        
+        if (data.APNS_TEAM_ID) {
+          resultHtml += `<li class="success">✅ APNS_TEAM_ID: ${data.APNS_TEAM_ID ? 'Set' : 'Not set'}</li>`;
+        } else {
+          resultHtml += `<li class="error">❌ APNS_TEAM_ID: Not set</li>`;
+        }
+        
+        if (data.APNS_BUNDLE_ID) {
+          resultHtml += `<li class="success">✅ APNS_BUNDLE_ID: ${data.APNS_BUNDLE_ID ? 'Set' : 'Not set'}</li>`;
+        } else {
+          resultHtml += `<li class="error">❌ APNS_BUNDLE_ID: Not set</li>`;
+        }
+        
+        resultHtml += '</ul>';
+        
+        // Check APNs Key file
+        if (data.APNsKeyExists) {
+          resultHtml += `<div class="success">✅ APNsKey.p8 file exists</div>`;
+        } else {
+          resultHtml += `<div class="error">❌ APNsKey.p8 file not found</div>`;
+        }
+        
+        if (data.APNsKeyValid) {
+          resultHtml += `<div class="success">✅ APNsKey.p8 appears to be valid</div>`;
+        } else {
+          resultHtml += `<div class="error">❌ APNsKey.p8 appears to be invalid</div>`;
+        }
+        
+        responseElement.innerHTML = resultHtml;
+      } catch (error) {
+        responseElement.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        console.error('Error checking environment:', error);
+      }
+    }
+  </script>
+</body>
+</html> 

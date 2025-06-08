@@ -130,6 +130,7 @@ export async function sendBulkPushNotifications(
     }
 
     console.log(`Sending push notification to ${deviceTokens.length} devices: ${message}`);
+    console.log(`Device tokens: ${deviceTokens}`);
     const result = await provider.send(notification, deviceTokens);
     
     if (result.failed.length > 0) {

@@ -146,17 +146,22 @@ export default function StudentProgressPage({ params }: { params: { id: string }
   };
 
   const handleSaveAllChanges = async () => {
-    if (!student) return;
+    console.log("[STUDENT_PROGRESS] handleSaveAllChanges called");
+    if (!student) {
+      console.log("[STUDENT_PROGRESS] No student data available");
+      return;
+    }
+    console.log("[STUDENT_PROGRESS] Starting save process for student:", student.id);
     setUpdatingSkill(true);
 
     try {
       const skillUpdatePromises = Object.values(skillsState).map(skill => 
         fetch("/api/skills/progress", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
             skillId: skill.id,
             enrollmentId: student.enrollmentId,
             status: skill.status,
@@ -175,13 +180,16 @@ export default function StudentProgressPage({ params }: { params: { id: string }
 
       const childId = student.id;
       
+      console.log("[STUDENT_PROGRESS] Fetching parents for child:", childId);
       const parentResponse = await fetch(`/api/children/${childId}/parents`);
       if (parentResponse.ok) {
         const parents = await parentResponse.json();
+        console.log("[STUDENT_PROGRESS] Found parents:", parents);
         const message = `Progress for ${student.name} has been updated.`;
         
         for (const parent of parents) {
-          await fetch("/api/notifications", {
+          console.log("[STUDENT_PROGRESS] Creating notification for parent:", parent.id);
+          const notificationResponse = await fetch("/api/notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -190,7 +198,15 @@ export default function StudentProgressPage({ params }: { params: { id: string }
               message: message,
             }),
           });
+          
+          if (!notificationResponse.ok) {
+            console.error("[STUDENT_PROGRESS] Failed to create notification:", await notificationResponse.text());
+          } else {
+            console.log("[STUDENT_PROGRESS] Successfully created notification");
+          }
         }
+      } else {
+        console.error("[STUDENT_PROGRESS] Failed to fetch parents:", await parentResponse.text());
       }
 
       await fetchStudentData();
@@ -307,63 +323,63 @@ export default function StudentProgressPage({ params }: { params: { id: string }
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Object.values(skillsState).map((skill) => (
-              <div
-                key={skill.id}
-                className="relative rounded-lg border border-gray-300 bg-white p-4 shadow-sm"
-              >
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {skill.name}
-                  </h3>
-                  {skill.description && (
-                    <p className="text-sm text-gray-500">{skill.description}</p>
-                  )}
-                  <div className="flex space-x-2">
-                    {["NOT_STARTED", "IN_PROGRESS", "COMPLETED"].map((status) => (
-                      <button
-                        key={status}
-                        disabled={updatingSkill}
+                <div
+                  key={skill.id}
+                  className="relative rounded-lg border border-gray-300 bg-white p-4 shadow-sm"
+                >
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-900">
+                      {skill.name}
+                    </h3>
+                    {skill.description && (
+                      <p className="text-sm text-gray-500">{skill.description}</p>
+                    )}
+                    <div className="flex space-x-2">
+                      {["NOT_STARTED", "IN_PROGRESS", "COMPLETED"].map((status) => (
+                        <button
+                          key={status}
+                          disabled={updatingSkill}
                         onClick={() => handleStatusChange(skill.id, status as Skill["status"])}
-                        className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                          skill.status === status
-                            ? getStatusColor(status as Skill["status"])
-                            : "bg-gray-50 text-gray-400 hover:bg-gray-100"
-                        }`}
-                        title={status.replace("_", " ")}
-                      >
-                        {getStatusIcon(status as Skill["status"])}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    <div>
-                      <label htmlFor={`strength-${skill.id}`} className="block text-sm font-medium text-green-700">
-                        I'm Awesome At:
-                      </label>
-                      <div className="mt-1">
-                        <textarea
-                          id={`strength-${skill.id}`}
-                          rows={2}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm bg-green-50"
-                          placeholder="Add notes about strengths..."
-                          value={skill.strengthNotes || ""}
-                          onChange={(e) => handleNotesChange(skill.id, 'strength', e.target.value)}
-                        />
-                      </div>
+                          className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                            skill.status === status
+                              ? getStatusColor(status as Skill["status"])
+                              : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                          }`}
+                          title={status.replace("_", " ")}
+                        >
+                          {getStatusIcon(status as Skill["status"])}
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <label htmlFor={`improvement-${skill.id}`} className="block text-sm font-medium text-blue-700">
-                        I Can Improve On:
-                      </label>
-                      <div className="mt-1">
-                        <textarea
-                          id={`improvement-${skill.id}`}
-                          rows={2}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-blue-50"
-                          placeholder="Add notes about areas for improvement..."
-                          value={skill.improvementNotes || ""}
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label htmlFor={`strength-${skill.id}`} className="block text-sm font-medium text-green-700">
+                          I'm Awesome At:
+                        </label>
+                        <div className="mt-1">
+                          <textarea
+                            id={`strength-${skill.id}`}
+                            rows={2}
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm bg-green-50"
+                            placeholder="Add notes about strengths..."
+                            value={skill.strengthNotes || ""}
+                          onChange={(e) => handleNotesChange(skill.id, 'strength', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor={`improvement-${skill.id}`} className="block text-sm font-medium text-blue-700">
+                          I Can Improve On:
+                        </label>
+                        <div className="mt-1">
+                          <textarea
+                            id={`improvement-${skill.id}`}
+                            rows={2}
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-blue-50"
+                            placeholder="Add notes about areas for improvement..."
+                            value={skill.improvementNotes || ""}
                           onChange={(e) => handleNotesChange(skill.id, 'improvement', e.target.value)}
-                        />
+                          />
                       </div>
                     </div>
                   </div>

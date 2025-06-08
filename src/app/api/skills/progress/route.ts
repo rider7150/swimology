@@ -12,10 +12,12 @@ const progressSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  console.log("[SKILLS_PROGRESS] Received progress update request");
   try {
     const session = await getServerSession(authOptions);
 
     if (!session) {
+      console.log("[SKILLS_PROGRESS] No session found");
       return NextResponse.json(
         { error: "Not authenticated" },
         { status: 401 }
@@ -28,6 +30,7 @@ export async function POST(request: Request) {
     });
 
     if (!instructor) {
+      console.log("[SKILLS_PROGRESS] No instructor found for user:", session.user.id);
       return NextResponse.json(
         { error: "Instructor record not found" },
         { status: 404 }
@@ -35,6 +38,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+    console.log("[SKILLS_PROGRESS] Request body:", body);
     const validatedData = progressSchema.parse(body);
 
     // Verify the enrollment belongs to a lesson taught by this instructor
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
     });
 
     if (!enrollment || enrollment.lesson.instructorId !== instructor.id) {
+      console.log("[SKILLS_PROGRESS] Unauthorized access attempt for enrollment:", validatedData.enrollmentId);
       return NextResponse.json(
         { error: "Unauthorized to update this student's progress" },
         { status: 403 }
@@ -53,6 +58,7 @@ export async function POST(request: Request) {
     }
 
     // Update or create the skill progress
+    console.log("[SKILLS_PROGRESS] Updating skill progress:", validatedData);
     const progress = await prisma.skillProgress.upsert({
       where: {
         skillId_enrollmentId: {
@@ -71,10 +77,11 @@ export async function POST(request: Request) {
         notes: validatedData.notes,
       },
     });
+    console.log("[SKILLS_PROGRESS] Successfully updated progress:", progress);
 
     return NextResponse.json(progress);
   } catch (error) {
-    console.error("Error updating skill progress:", error);
+    console.error("[SKILLS_PROGRESS] Error updating skill progress:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.errors[0].message },
