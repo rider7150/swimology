@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         await sendBulkPushNotifications(tokens, message, {
           notificationId: notification.id,
           childId: childId || undefined,
-        });
+        }, unreadCount);
       } else {
         console.log(`[NOTIFICATIONS] No device tokens found for parent ${parentId}`);
       }
