@@ -63,7 +63,8 @@ export function initAPNProvider() {
 export async function sendPushNotification(
   deviceToken: string, 
   message: string, 
-  payload?: Record<string, any>
+  payload?: Record<string, any>,
+  badgeCount?: number
 ): Promise<apn.Responses | null> {
   try {
     const provider = initAPNProvider();
@@ -75,7 +76,7 @@ export async function sendPushNotification(
     const notification = new apn.Notification();
     
     notification.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires in 1 hour
-    notification.badge = 1;
+    notification.badge = badgeCount || 1;
     notification.sound = "ping.aiff";
     notification.alert = message;
     notification.topic = process.env.APNS_BUNDLE_ID || 'com.swimology.app';
@@ -104,7 +105,8 @@ export async function sendPushNotification(
 export async function sendBulkPushNotifications(
   deviceTokens: string[], 
   message: string, 
-  payload?: Record<string, any>
+  payload?: Record<string, any>,
+  badgeCount?: number
 ): Promise<apn.Responses | null> {
   if (!deviceTokens.length) {
     return null;
@@ -120,7 +122,7 @@ export async function sendBulkPushNotifications(
     const notification = new apn.Notification();
     
     notification.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires in 1 hour
-    notification.badge = 1;
+    notification.badge = badgeCount || 1;
     notification.sound = "ping.aiff";
     notification.alert = message;
     notification.topic = process.env.APNS_BUNDLE_ID || 'com.swimology.app';

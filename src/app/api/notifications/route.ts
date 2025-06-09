@@ -27,6 +27,17 @@ export async function POST(req: Request) {
   });
   console.log("[NOTIFICATIONS] Created notification:", notification);
 
+  // Count unread notifications for this parent to determine badge count
+  console.log("[NOTIFICATIONS] Counting unread notifications for badge");
+  const unreadCount = await prisma.notification.count({
+    where: {
+      parentId: parentId,
+      read: false,
+    },
+  });
+  console.log(`[NOTIFICATIONS] Unread notifications count for parent ${parentId}: ${unreadCount}`);
+
+
   // Find any device tokens for this parent and send push notifications
   try {
     // If a device token was directly provided in the request, use it
@@ -40,7 +51,8 @@ export async function POST(req: Request) {
         {
           notificationId: notification.id,
           childId: childId || undefined,
-        }
+        },
+        unreadCount
       );
     } else {
       // Look up device tokens for this parent
